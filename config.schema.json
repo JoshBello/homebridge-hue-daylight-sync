@@ -43,7 +43,7 @@
         "type": "integer",
         "minimum": 2000,
         "maximum": 6500,
-        "default": 6500
+        "default": 3000
       },
       "updateInterval": {
         "title": "Update Interval (ms)",

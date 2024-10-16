@@ -13,7 +13,7 @@ export class TemperatureCalculator {
     this.latitude = config.latitude;
     this.longitude = config.longitude;
     this.warmTemp = config.warmTemp || 2700;
-    this.coolTemp = config.coolTemp || 6500;
+    this.coolTemp = config.coolTemp || 3000;
     this.updateInterval = config.updateInterval || 300000; // 5 minutes
   }
 
