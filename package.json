@@ -16,7 +16,11 @@
     "url": "https://github.com/JoshBello/homebridge-hue-daylight-sync/issues"
   },
   "keywords": [
-    "homebridge-plugin"
+    "homebridge-plugin",
+    "homebridge",
+    "hue",
+    "daylight",
+    "sync"
   ],
   "engines": {
     "node": "^18.20.4 || ^20.10.0 || ^20.16.0 || ^22.6.0",
@@ -47,5 +51,12 @@
     "axios": "^1.7.7",
     "https": "^1.0.0",
     "suncalc": "^1.9.0"
-  }
+  },
+  "files": [
+    "LICENSE",
+    "dist",
+    "config.schema.json",
+    "package.json",
+    "README.md"
+  ]
 }
