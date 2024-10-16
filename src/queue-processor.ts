@@ -1,7 +1,7 @@
 import axios from 'axios';
 import https from 'https';
 import { Logger } from 'homebridge';
-import { Config, QueueItem } from './types';
+import { Config, LightState, QueueItem } from './types';
 
 export class QueueProcessor {
   private bridgeIp: string;
@@ -12,6 +12,47 @@ export class QueueProcessor {
   constructor(config: Config, private readonly log: Logger) {
     this.bridgeIp = config.bridgeIp;
     this.apiToken = config.apiToken;
+  }
+
+  async getLightState(): Promise<LightState> {
+    if (!this.bridgeIp) {
+      this.log.error('Cannot get light state: Hue Bridge IP is not set');
+      throw new Error('Hue Bridge IP not set');
+    }
+
+    const url = `https://${this.bridgeIp}/clip/v2/resource/light`;
+    const headers = { 'hue-application-key': this.apiToken };
+
+    try {
+      const response = await axios.get(url, {
+        headers,
+        httpsAgent: new https.Agent({ rejectUnauthorized: false }),
+      });
+
+      if (response.status === 200) {
+        const lights = response.data.data as Record<string, unknown>[];
+        if (lights.length > 0) {
+          const firstLight = lights[0];
+          const isOn = (firstLight.on as { on: boolean })?.on ?? false;
+          const colorTemp = (firstLight.color_temperature as { mirek: number })?.mirek;
+          if (colorTemp) {
+            const kelvin = Math.round(1000000 / colorTemp);
+            this.log.debug(`Light state - On: ${isOn}, Temperature: ${kelvin}K`);
+            return { isOn, temperature: kelvin };
+          }
+        }
+        throw new Error('No lights found or no color temperature data available');
+      } else {
+        throw new Error(`Failed to get lights: ${response.status}`);
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        this.log.error(`Error fetching light state: ${error.message}`);
+      } else {
+        this.log.error('Unknown error fetching light state');
+      }
+      throw error;
+    }
   }
 
   async updateLightsColor(targetTemp: number) {

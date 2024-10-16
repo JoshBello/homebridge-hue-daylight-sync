@@ -13,3 +13,8 @@ export interface QueueItem {
   lightName: string;
   kelvin: number;
 }
+
+export interface LightState {
+  isOn: boolean;
+  temperature: number;
+}

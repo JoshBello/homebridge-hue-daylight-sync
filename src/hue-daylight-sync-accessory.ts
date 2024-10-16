@@ -20,21 +20,9 @@ export class HueDaylightSyncAccessory {
 
     this.lightService = new LightService(platform, accessory, this.temperatureCalculator, this.queueProcessor);
 
-    this.autoModeService = new AutoModeService(platform, accessory, this.lightService, this.temperatureCalculator, this.updateTemperature.bind(this));
+    this.autoModeService = new AutoModeService(platform, accessory, this.lightService, this.temperatureCalculator);
 
     // Start processing the queue
     setInterval(() => this.queueProcessor.processQueue(), 100);
-  }
-
-  private async updateTemperature() {
-    const newTemp = await this.temperatureCalculator.calculateIdealTemp();
-    const currentTemp = this.lightService.getCurrentTemp();
-
-    if (newTemp !== currentTemp) {
-      this.platform.log.debug(`Updating temperature from ${currentTemp}K to ${newTemp}K`);
-      this.lightService.updateTemperature(newTemp);
-    } else {
-      this.platform.log.debug(`Temperature remains unchanged at ${currentTemp}K`);
-    }
   }
 }

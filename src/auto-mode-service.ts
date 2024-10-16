@@ -13,7 +13,6 @@ export class AutoModeService {
     private readonly accessory: PlatformAccessory,
     private readonly lightService: LightService,
     private readonly temperatureCalculator: TemperatureCalculator,
-    private readonly updateTemperature: () => Promise<void>,
   ) {
     this.service = this.accessory.getService('Auto Mode') || this.accessory.addService(this.platform.Service.Switch, 'Auto Mode', 'auto-mode');
 
@@ -24,10 +23,6 @@ export class AutoModeService {
     this.isAutoMode = value as boolean;
     this.platform.log.info('Set Auto Mode ->', value);
     if (this.isAutoMode) {
-      const currentTemp = this.lightService.getCurrentTemp();
-      const targetTemp = await this.temperatureCalculator.calculateIdealTemp();
-      this.platform.log.info(`Auto Mode ON - Current Temp: ${currentTemp}K, Target Temp: ${targetTemp}K`);
-
       await this.updateTemperature(); // Immediate update when auto mode is enabled
       this.startAutoUpdate();
     } else {
@@ -50,6 +45,20 @@ export class AutoModeService {
     if (this.autoUpdateInterval) {
       clearInterval(this.autoUpdateInterval);
       this.autoUpdateInterval = null;
+    }
+  }
+
+  private async updateTemperature() {
+    const currentTemp = this.lightService.getCurrentTemp();
+    const targetTemp = await this.temperatureCalculator.calculateIdealTemp();
+
+    this.platform.log.info(`Auto Mode Update - Current Temp: ${currentTemp}K, Target Temp: ${targetTemp}K`);
+
+    if (currentTemp !== targetTemp) {
+      this.platform.log.info(`Scheduling temperature update from ${currentTemp}K to ${targetTemp}K`);
+      await this.lightService.updateTemperature(targetTemp);
+    } else {
+      this.platform.log.debug(`Temperature remains unchanged at ${currentTemp}K`);
     }
   }
 }
