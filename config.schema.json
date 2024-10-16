@@ -9,7 +9,7 @@
         "title": "Name",
         "type": "string",
         "required": true,
-        "default": "Hue Daylight Sync"
+        "default": "Daylight Sync"
       },
       "bridgeIp": {
         "title": "Hue Bridge IP",
