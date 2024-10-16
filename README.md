@@ -1,4 +1,16 @@
+<p align="center">
+  <img src="homebridge-hue.png" height="200px">  
+</p>
+<span align="center">
+
 # Hue Daylight Sync
+
+[![npm version](https://badge.fury.io/js/homebridge-hue-daylight-sync.svg)](https://badge.fury.io/js/homebridge-hue-daylight-sync)
+[![npm downloads](https://img.shields.io/npm/dt/homebridge-hue-daylight-sync.svg)](https://www.npmjs.com/package/homebridge-hue-daylight-sync)
+
+</span>
+
+## Hue Daylight Sync: Automated Philips Hue Light Adjustment for Natural Daylight Cycles
 
 Hue Daylight Sync is a Homebridge plugin that automatically adjusts your Philips Hue lights based on the natural daylight cycle. It calculates the ideal color temperature throughout the day based on your geographical location and smoothly transitions your lights to match.
 
