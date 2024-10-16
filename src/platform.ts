@@ -23,7 +23,7 @@ export class HueDaylightSyncPlatform implements DynamicPlatformPlugin {
   }
 
   discoverDevices() {
-    const deviceName = 'Hue Daylight Sync';
+    const deviceName = 'Daylight Sync';
     const uuid = this.api.hap.uuid.generate(PLUGIN_NAME);
 
     const existingAccessory = this.accessories.find((accessory) => accessory.UUID === uuid);
