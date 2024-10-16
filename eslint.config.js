@@ -1,12 +1,39 @@
-import eslint from '@eslint/js';
-import tseslint from 'typescript-eslint';
+// eslint-disable-next-line no-undef
+const js = require('@eslint/js');
+// eslint-disable-next-line no-undef
+const typescript = require('@typescript-eslint/eslint-plugin');
+// eslint-disable-next-line no-undef
+const typescriptParser = require('@typescript-eslint/parser');
 
-export default [
+// eslint-disable-next-line no-undef
+module.exports = [
+  js.configs.recommended,
   {
-    ignores: ['dist/**'],
+    files: ['src/**/*.ts'],
+    ignores: ['**/node_modules/**', '**/dist/**'],
+    languageOptions: {
+      parser: typescriptParser,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+        project: './tsconfig.json',
+      },
+      globals: {
+        NodeJS: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        console: 'readonly',
+      },
+    },
+    plugins: {
+      '@typescript-eslint': typescript,
+    },
     rules: {
+      ...typescript.configs['recommended'].rules,
       quotes: ['error', 'single'],
-      indent: ['error', 2, { SwitchCase: 1 }], // Enforce 2 spaces with 1 level indentation for `case` blocks
+      indent: ['error', 2, { SwitchCase: 1 }],
       'linebreak-style': ['error', 'unix'],
       semi: ['error', 'always'],
       'comma-dangle': ['error', 'always-multiline'],
@@ -21,11 +48,5 @@ export default [
       '@typescript-eslint/no-use-before-define': ['error', { classes: false, enums: false }],
       '@typescript-eslint/no-unused-vars': ['error', { caughtErrors: 'none' }],
     },
-    languageOptions: {
-      ecmaVersion: 2022,
-      sourceType: 'module',
-    },
   },
-  eslint.configs.recommended,
-  ...tseslint.configs.recommended,
 ];
