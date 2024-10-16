@@ -1,0 +1,57 @@
+{
+  "pluginAlias": "HueDaylightSync",
+  "pluginType": "accessory",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "title": "Name",
+        "type": "string",
+        "required": true,
+        "default": "Hue Daylight Sync"
+      },
+      "bridgeIp": {
+        "title": "Hue Bridge IP",
+        "type": "string",
+        "required": true,
+        "format": "ipv4"
+      },
+      "apiToken": {
+        "title": "Hue API Token",
+        "type": "string",
+        "required": true
+      },
+      "latitude": {
+        "title": "Latitude",
+        "type": "number",
+        "required": true
+      },
+      "longitude": {
+        "title": "Longitude",
+        "type": "number",
+        "required": true
+      },
+      "warmTemp": {
+        "title": "Warm Temperature (K)",
+        "type": "integer",
+        "minimum": 2000,
+        "maximum": 6500,
+        "default": 2700
+      },
+      "coolTemp": {
+        "title": "Cool Temperature (K)",
+        "type": "integer",
+        "minimum": 2000,
+        "maximum": 6500,
+        "default": 6500
+      },
+      "updateInterval": {
+        "title": "Update Interval (ms)",
+        "type": "integer",
+        "minimum": 60000,
+        "maximum": 3600000,
+        "default": 300000
+      }
+    }
+  }
+}
