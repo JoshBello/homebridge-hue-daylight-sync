@@ -10,27 +10,25 @@ export class LightService {
   private currentTemp: number;
   private targetTemp: number;
   private updateTimeout: NodeJS.Timeout | null = null;
-  private inputDebounceDelay = 1000; // 1 seconds delay for user input
   private isUpdating = false;
   private isInitialized = false;
+  private inputDebounceDelay: number;
 
   constructor(
     private readonly platform: HueDaylightSyncPlatform,
     private readonly accessory: PlatformAccessory,
     private readonly temperatureCalculator: TemperatureCalculator,
     private readonly queueProcessor: QueueProcessor,
+    inputDebounceDelay?: number,
   ) {
-    this.service = this.accessory.getService(this.platform.Service.Lightbulb) || this.accessory.addService(this.platform.Service.Lightbulb);
-    this.service.setCharacteristic(this.platform.Characteristic.Name, 'Daylight Sync');
-
-    // Initialize temperatures
+    this.inputDebounceDelay = inputDebounceDelay ?? 750; // Default to 750ms if not provided
     this.currentTemp = this.temperatureCalculator.getWarmTemp();
     this.targetTemp = this.currentTemp;
 
-    // Setup characteristics
-    this.setupCharacteristics();
+    this.service = this.accessory.getService(this.platform.Service.Lightbulb) || this.accessory.addService(this.platform.Service.Lightbulb);
+    this.service.setCharacteristic(this.platform.Characteristic.Name, 'Daylight Sync');
 
-    // Initialize the service
+    this.setupCharacteristics();
     this.initialize();
   }
 

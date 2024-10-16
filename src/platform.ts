@@ -1,6 +1,7 @@
 import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, Service, Characteristic } from 'homebridge';
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 import { HueDaylightSyncAccessory } from './hue-daylight-sync-accessory';
+import { Config } from './types';
 
 export class HueDaylightSyncPlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
@@ -23,20 +24,48 @@ export class HueDaylightSyncPlatform implements DynamicPlatformPlugin {
   }
 
   discoverDevices() {
-    const deviceName = 'Daylight Sync';
+    const deviceName = this.config.name || 'Daylight Sync';
     const uuid = this.api.hap.uuid.generate(PLUGIN_NAME);
 
     const existingAccessory = this.accessories.find((accessory) => accessory.UUID === uuid);
 
+    const validatedConfig = this.validateConfig(this.config);
+    if (!validatedConfig) {
+      this.log.error('Invalid configuration. Please check your config.json');
+      return;
+    }
+
     if (existingAccessory) {
       this.log.info('Restoring existing accessory from cache:', existingAccessory.displayName);
-      new HueDaylightSyncAccessory(this, existingAccessory);
+      new HueDaylightSyncAccessory(this, existingAccessory, validatedConfig);
     } else {
       this.log.info('Adding new accessory:', deviceName);
       const accessory = new this.api.platformAccessory(deviceName, uuid);
-      accessory.context.device = this.config;
-      new HueDaylightSyncAccessory(this, accessory);
+      new HueDaylightSyncAccessory(this, accessory, validatedConfig);
       this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
     }
+  }
+
+  private validateConfig(config: PlatformConfig): Config | null {
+    if (
+      typeof config.bridgeIp !== 'string' ||
+      typeof config.apiToken !== 'string' ||
+      typeof config.latitude !== 'number' ||
+      typeof config.longitude !== 'number'
+    ) {
+      return null;
+    }
+
+    return {
+      ...config,
+      bridgeIp: config.bridgeIp,
+      apiToken: config.apiToken,
+      latitude: config.latitude,
+      longitude: config.longitude,
+      updateInterval: config.updateInterval || 300000,
+      warmTemp: config.warmTemp || 2700,
+      coolTemp: config.coolTemp || 6500,
+      inputDebounceDelay: config.inputDebounceDelay || 750,
+    };
   }
 }

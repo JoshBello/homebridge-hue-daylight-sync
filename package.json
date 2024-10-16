@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "description": "A Homebridge plugin for syncing Hue lights with daylight",
   "main": "dist/index.js",
+  "configSchema": "config.schema.json",
   "private": true,
-  "author": "Your Name",
+  "author": "Josh Bello",
   "license": "Apache-2.0",
   "homepage": "https://github.com/USERNAME/GITHUB_PROJECT_NAME#readme",
   "repository": {

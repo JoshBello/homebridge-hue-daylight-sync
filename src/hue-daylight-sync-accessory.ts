@@ -12,13 +12,11 @@ export class HueDaylightSyncAccessory {
   private temperatureCalculator: TemperatureCalculator;
   private queueProcessor: QueueProcessor;
 
-  constructor(private readonly platform: HueDaylightSyncPlatform, private readonly accessory: PlatformAccessory) {
-    const config: Config = this.accessory.context.device;
-
+  constructor(private readonly platform: HueDaylightSyncPlatform, private readonly accessory: PlatformAccessory, private readonly config: Config) {
     this.temperatureCalculator = new TemperatureCalculator(config, platform.log);
     this.queueProcessor = new QueueProcessor(config, platform.log);
 
-    this.lightService = new LightService(platform, accessory, this.temperatureCalculator, this.queueProcessor);
+    this.lightService = new LightService(platform, accessory, this.temperatureCalculator, this.queueProcessor, config.inputDebounceDelay);
 
     this.autoModeService = new AutoModeService(platform, accessory, this.lightService, this.temperatureCalculator);
 

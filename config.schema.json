@@ -1,6 +1,7 @@
 {
   "pluginAlias": "HueDaylightSync",
-  "pluginType": "accessory",
+  "pluginType": "platform",
+  "singular": true,
   "schema": {
     "type": "object",
     "properties": {
@@ -24,33 +25,42 @@
       "latitude": {
         "title": "Latitude",
         "type": "number",
-        "required": true
+        "required": true,
+        "minimum": -90,
+        "maximum": 90
       },
       "longitude": {
         "title": "Longitude",
         "type": "number",
-        "required": true
-      },
-      "warmTemp": {
-        "title": "Warm Temperature (K)",
-        "type": "integer",
-        "minimum": 2000,
-        "maximum": 6500,
-        "default": 2700
-      },
-      "coolTemp": {
-        "title": "Cool Temperature (K)",
-        "type": "integer",
-        "minimum": 2000,
-        "maximum": 6500,
-        "default": 3000
+        "required": true,
+        "minimum": -180,
+        "maximum": 180
       },
       "updateInterval": {
         "title": "Update Interval (ms)",
         "type": "integer",
-        "minimum": 60000,
-        "maximum": 3600000,
-        "default": 300000
+        "default": 300000,
+        "minimum": 1000
+      },
+      "warmTemp": {
+        "title": "Warm Temperature (K)",
+        "type": "integer",
+        "default": 2400,
+        "minimum": 2000,
+        "maximum": 6500
+      },
+      "coolTemp": {
+        "title": "Cool Temperature (K)",
+        "type": "integer",
+        "default": 2800,
+        "minimum": 2000,
+        "maximum": 6500
+      },
+      "inputDebounceDelay": {
+        "title": "Input Debounce Delay (ms)",
+        "type": "integer",
+        "default": 750,
+        "minimum": 0
       }
     }
   }

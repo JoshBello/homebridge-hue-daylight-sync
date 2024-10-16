@@ -1,4 +1,6 @@
-export interface Config {
+import { PlatformConfig } from 'homebridge';
+
+export interface Config extends PlatformConfig {
   bridgeIp: string;
   apiToken: string;
   latitude: number;
@@ -6,6 +8,7 @@ export interface Config {
   updateInterval?: number;
   warmTemp?: number;
   coolTemp?: number;
+  inputDebounceDelay?: number;
 }
 
 export interface QueueItem {
