@@ -61,6 +61,12 @@
         "type": "integer",
         "default": 750,
         "minimum": 0
+      },
+      "defaultAutoMode": {
+        "title": "Default Auto Mode",
+        "type": "boolean",
+        "default": true,
+        "description": "Set to true to enable Auto Mode by default, false to disable."
       }
     }
   }

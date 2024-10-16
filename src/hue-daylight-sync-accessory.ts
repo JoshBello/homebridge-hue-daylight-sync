@@ -18,7 +18,7 @@ export class HueDaylightSyncAccessory {
 
     this.lightService = new LightService(platform, accessory, this.temperatureCalculator, this.queueProcessor, config.inputDebounceDelay);
 
-    this.autoModeService = new AutoModeService(platform, accessory, this.lightService, this.temperatureCalculator);
+    this.autoModeService = new AutoModeService(platform, accessory, this.lightService, this.temperatureCalculator, config);
 
     // Start processing the queue
     setInterval(() => this.queueProcessor.processQueue(), 100);

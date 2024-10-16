@@ -9,6 +9,7 @@ export interface Config extends PlatformConfig {
   warmTemp?: number;
   coolTemp?: number;
   inputDebounceDelay?: number;
+  defaultAutoMode?: boolean;
 }
 
 export interface QueueItem {
