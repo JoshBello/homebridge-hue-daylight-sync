@@ -1,6 +1,6 @@
 import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, Service, Characteristic } from 'homebridge';
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
-import { HueDaylightSyncAccessory } from './platformAccessory';
+import { HueDaylightSyncAccessory } from './hue-daylight-sync-accessory';
 
 export class HueDaylightSyncPlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
@@ -23,15 +23,17 @@ export class HueDaylightSyncPlatform implements DynamicPlatformPlugin {
   }
 
   discoverDevices() {
-    const uuid = this.api.hap.uuid.generate('homebridge-hue-daylight-sync');
+    const deviceName = 'Hue Daylight Sync';
+    const uuid = this.api.hap.uuid.generate(PLUGIN_NAME);
+
     const existingAccessory = this.accessories.find((accessory) => accessory.UUID === uuid);
 
     if (existingAccessory) {
       this.log.info('Restoring existing accessory from cache:', existingAccessory.displayName);
       new HueDaylightSyncAccessory(this, existingAccessory);
     } else {
-      this.log.info('Adding new accessory');
-      const accessory = new this.api.platformAccessory('Hue Daylight Sync', uuid);
+      this.log.info('Adding new accessory:', deviceName);
+      const accessory = new this.api.platformAccessory(deviceName, uuid);
       accessory.context.device = this.config;
       new HueDaylightSyncAccessory(this, accessory);
       this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);

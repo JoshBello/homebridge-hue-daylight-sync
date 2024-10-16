@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2018",
-    "module": "CommonJS",
+    "module": "commonjs",
     "lib": ["ES2015", "ES2016", "ES2017", "ES2018"],
     "declaration": true,
     "declarationMap": true,
@@ -12,6 +12,10 @@
     "esModuleInterop": true,
     "resolveJsonModule": true
   },
-  "include": ["src"],
-  "exclude": ["**/*.spec.ts"]
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "**/__tests__/*"
+  ]
 }
