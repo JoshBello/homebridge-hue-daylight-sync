@@ -1,6 +1,6 @@
 {
   "name": "homebridge-hue-daylight-sync",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A Homebridge plugin for syncing Hue lights with daylight",
   "main": "dist/index.js",
   "configSchema": "config.schema.json",
