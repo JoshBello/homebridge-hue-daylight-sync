@@ -29,7 +29,7 @@ Hue Daylight Sync is a Homebridge plugin that automatically adjusts your Philips
 ## Prerequisites
 
 - [Homebridge](https://homebridge.io/) installed on your system
-- Philips Hue Bridge with API access
+- Philips Hue Bridge with API access - [Hue Guide](https://developers.meethue.com/develop/hue-api-v2/getting-started/#follow-3-easy-steps)
 - Philips Hue color temperature capable lights
 
 ## Installation
