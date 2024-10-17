@@ -5,7 +5,8 @@
 
 # Hue Daylight Sync
 
-[![npm version](https://badge.fury.io/js/homebridge-hue-daylight-sync.svg)](https://badge.fury.io/js/homebridge-hue-daylight-sync)
+[![npm version](https://img.shields.io/npm/v/homebridge-hue-daylight-sync
+)](https://badge.fury.io/js/homebridge-hue-daylight-sync)
 [![npm downloads](https://img.shields.io/npm/d18m/homebridge-hue-daylight-sync.svg)](https://www.npmjs.com/package/homebridge-hue-daylight-sync)
 [![GitHub Issues](https://img.shields.io/github/issues/JoshBello/homebridge-hue-daylight-sync)](https://github.com/JoshBello/homebridge-hue-daylight-sync/issues)
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/JoshBello/homebridge-hue-daylight-sync/open)](https://github.com/JoshBello/homebridge-hue-daylight-sync/pulls)
