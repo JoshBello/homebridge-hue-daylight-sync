@@ -2,17 +2,15 @@ import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
 import { HueDaylightSyncPlatform } from './platform';
 import { TemperatureCalculator } from './temperature-calculator';
 import { QueueProcessor } from './queue-processor';
-import { mapBrightnessToTemp, mapTempToBrightness } from './utils';
+import { kelvinToMired, miredToKelvin, mapKelvinToBrightness, mapBrightnessToKelvin } from './utils';
 
 export class LightService {
   private service: Service;
   private isOn = false;
   private currentTemp: number;
-  private targetTemp: number;
-  private updateTimeout: NodeJS.Timeout | null = null;
   private isUpdating = false;
-  private isInitialized = false;
-  private inputDebounceDelay: number;
+  private readonly inputDebounceDelay: number;
+  private updateTimeout: NodeJS.Timeout | null = null;
 
   constructor(
     private readonly platform: HueDaylightSyncPlatform,
@@ -21,81 +19,66 @@ export class LightService {
     private readonly queueProcessor: QueueProcessor,
     inputDebounceDelay?: number,
   ) {
-    this.inputDebounceDelay = inputDebounceDelay ?? 750; // Default to 750ms if not provided
+    this.inputDebounceDelay = inputDebounceDelay ?? 750;
     this.currentTemp = this.temperatureCalculator.getWarmTemp();
-    this.targetTemp = this.currentTemp;
 
     this.service = this.accessory.getService(this.platform.Service.Lightbulb) || this.accessory.addService(this.platform.Service.Lightbulb);
+
     this.service.setCharacteristic(this.platform.Characteristic.Name, 'Daylight Sync');
 
-    this.setupCharacteristics();
-    this.initialize();
-  }
-
-  private setupCharacteristics() {
     this.service.getCharacteristic(this.platform.Characteristic.On).onSet(this.setOn.bind(this)).onGet(this.getOn.bind(this));
 
     this.service.getCharacteristic(this.platform.Characteristic.Brightness).onSet(this.setBrightness.bind(this)).onGet(this.getBrightness.bind(this));
-  }
 
-  private async initialize() {
-    try {
-      const initialState = await this.queueProcessor.getLightState();
-      this.isOn = initialState.isOn;
-      this.currentTemp = initialState.temperature;
-      this.targetTemp = this.currentTemp;
+    this.service
+      .getCharacteristic(this.platform.Characteristic.ColorTemperature)
+      .onSet(this.setColorTemperature.bind(this))
+      .onGet(this.getColorTemperature.bind(this))
+      .setProps({
+        minValue: kelvinToMired(this.temperatureCalculator.getCoolTemp()),
+        maxValue: kelvinToMired(this.temperatureCalculator.getWarmTemp()),
+        minStep: 1,
+      });
 
-      this.updateBrightnessFromTemp(this.currentTemp);
-      this.service.updateCharacteristic(this.platform.Characteristic.On, this.isOn);
-
-      this.platform.log.info(`Initialized light state - On: ${this.isOn}, Temperature: ${this.currentTemp}K`);
-      this.isInitialized = true;
-    } catch (error) {
-      this.platform.log.error('Error initializing light service:', error);
-    }
-  }
-
-  private updateBrightnessFromTemp(temp: number) {
-    const brightness = mapTempToBrightness(temp, this.temperatureCalculator.getWarmTemp(), this.temperatureCalculator.getCoolTemp());
-    this.service.updateCharacteristic(this.platform.Characteristic.Brightness, brightness);
-    this.platform.log.debug(`Updated brightness to ${brightness} based on temperature ${temp}K`);
+    this.updateHomeKitCharacteristics();
   }
 
   async setOn(value: CharacteristicValue) {
     this.isOn = value as boolean;
     this.platform.log.info('Set Characteristic On ->', value);
     if (this.isOn) {
-      this.debounceUpdate();
+      this.debounceUpdate(() => this.updateLights(this.currentTemp));
     } else {
-      if (this.updateTimeout) {
-        clearTimeout(this.updateTimeout);
-        this.updateTimeout = null;
-      }
+      this.updateHomeKitCharacteristics();
     }
   }
 
   async getOn(): Promise<CharacteristicValue> {
-    if (!this.isInitialized) {
-      await this.initialize();
-    }
     return this.isOn;
   }
 
   async setBrightness(value: CharacteristicValue) {
     const brightness = value as number;
     this.platform.log.info('Set Characteristic Brightness -> ', brightness);
-    this.targetTemp = mapBrightnessToTemp(brightness, this.temperatureCalculator.getWarmTemp(), this.temperatureCalculator.getCoolTemp());
-    this.platform.log.debug(`Target temperature set to ${this.targetTemp}K`);
-    if (this.isOn) {
-      this.debounceUpdate();
-    }
+    const newTemp = mapBrightnessToKelvin(brightness, this.temperatureCalculator.getWarmTemp(), this.temperatureCalculator.getCoolTemp());
+    this.debounceUpdate(() => this.updateLights(newTemp));
   }
 
   async getBrightness(): Promise<CharacteristicValue> {
-    if (!this.isInitialized) {
-      await this.initialize();
-    }
-    return mapTempToBrightness(this.currentTemp, this.temperatureCalculator.getWarmTemp(), this.temperatureCalculator.getCoolTemp());
+    return mapKelvinToBrightness(this.currentTemp, this.temperatureCalculator.getWarmTemp(), this.temperatureCalculator.getCoolTemp());
+  }
+
+  async setColorTemperature(value: CharacteristicValue) {
+    const mired = value as number;
+    const kelvin = miredToKelvin(mired);
+    this.platform.log.info(`Set Characteristic ColorTemperature -> ${mired} mired (${kelvin}K)`);
+    this.debounceUpdate(() => this.updateLights(kelvin));
+  }
+
+  async getColorTemperature(): Promise<CharacteristicValue> {
+    const mired = kelvinToMired(this.currentTemp);
+    this.platform.log.debug(`Current temperature ${this.currentTemp}K mapped to ${mired} mired`);
+    return mired;
   }
 
   getCurrentTemp(): number {
@@ -103,43 +86,52 @@ export class LightService {
   }
 
   async updateTemperature(newTemp: number) {
-    this.targetTemp = newTemp;
-    this.platform.log.debug(`Target temperature set to ${this.targetTemp}K from auto mode`);
-    if (this.isOn) {
-      this.debounceUpdate();
+    if (newTemp !== this.currentTemp) {
+      this.platform.log.info(`Updating temperature from ${this.currentTemp}K to ${newTemp}K`);
+      this.debounceUpdate(() => this.updateLights(newTemp));
     }
-    this.updateBrightnessFromTemp(newTemp);
   }
 
-  private debounceUpdate(): void {
+  private debounceUpdate(updateFn: () => Promise<void>) {
     if (this.updateTimeout) {
       clearTimeout(this.updateTimeout);
     }
-
-    this.updateTimeout = setTimeout(() => {
-      this.performUpdate();
+    this.updateTimeout = setTimeout(async () => {
+      await updateFn();
+      this.updateTimeout = null;
     }, this.inputDebounceDelay);
+  }
+
+  private async updateLights(newTemp: number) {
+    this.currentTemp = newTemp;
+    this.updateHomeKitCharacteristics();
+    if (this.isOn) {
+      await this.performUpdate();
+    }
+  }
+
+  private updateHomeKitCharacteristics() {
+    const mired = kelvinToMired(this.currentTemp);
+    const brightness = mapKelvinToBrightness(this.currentTemp, this.temperatureCalculator.getWarmTemp(), this.temperatureCalculator.getCoolTemp());
+    this.service.updateCharacteristic(this.platform.Characteristic.ColorTemperature, mired);
+    this.service.updateCharacteristic(this.platform.Characteristic.Brightness, brightness);
+    this.service.updateCharacteristic(this.platform.Characteristic.On, this.isOn);
+    this.platform.log.debug(`Updated HomeKit - ColorTemperature: ${mired} mired (${this.currentTemp}K), Brightness: ${brightness}%, On: ${this.isOn}`);
   }
 
   private async performUpdate(): Promise<void> {
     if (this.isUpdating) {
       this.platform.log.debug('Update already in progress, scheduling another update');
-      this.debounceUpdate();
       return;
     }
 
     this.isUpdating = true;
 
     try {
-      if (this.currentTemp !== this.targetTemp) {
-        this.currentTemp = this.targetTemp;
-        this.platform.log.info(`Updating lights to ${this.currentTemp}K`);
-        await this.queueProcessor.updateLightsColor(this.currentTemp);
-        this.platform.log.info(`Lights updated to ${this.currentTemp}K`);
-        this.updateBrightnessFromTemp(this.currentTemp);
-      } else {
-        this.platform.log.debug(`No update needed, current temp: ${this.currentTemp}K`);
-      }
+      this.platform.log.info(`Updating lights to ${this.currentTemp}K`);
+      await this.queueProcessor.updateLightsColor(this.currentTemp);
+      this.platform.log.info(`Lights updated to ${this.currentTemp}K`);
+      this.updateHomeKitCharacteristics();
     } catch (error) {
       this.platform.log.error('Error updating lights:', error);
     } finally {

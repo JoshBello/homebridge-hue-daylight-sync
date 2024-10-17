@@ -16,13 +16,12 @@ export class AutoModeService {
     private readonly temperatureCalculator: TemperatureCalculator,
     private readonly config: Config,
   ) {
-    this.isAutoMode = config.defaultAutoMode ?? true; // Use config value or default to true
+    this.isAutoMode = config.defaultAutoMode ?? true;
 
     this.service = this.accessory.getService('Auto Mode') || this.accessory.addService(this.platform.Service.Switch, 'Auto Mode', 'auto-mode');
 
     this.service.getCharacteristic(this.platform.Characteristic.On).onSet(this.setAutoMode.bind(this)).onGet(this.getAutoMode.bind(this));
 
-    // Initialize auto mode
     this.initializeAutoMode();
   }
 
@@ -51,16 +50,18 @@ export class AutoModeService {
   }
 
   private startAutoUpdate() {
-    this.stopAutoUpdate(); // Clear any existing interval
+    this.stopAutoUpdate();
     this.autoUpdateInterval = setInterval(() => {
       this.updateTemperature();
     }, this.temperatureCalculator.getUpdateInterval());
+    this.platform.log.debug('Auto update started');
   }
 
   private stopAutoUpdate() {
     if (this.autoUpdateInterval) {
       clearInterval(this.autoUpdateInterval);
       this.autoUpdateInterval = null;
+      this.platform.log.debug('Auto update stopped');
     }
   }
 
@@ -68,7 +69,6 @@ export class AutoModeService {
     if (!this.isAutoMode) {
       return;
     }
-
     const currentTemp = this.lightService.getCurrentTemp();
     const targetTemp = await this.temperatureCalculator.calculateIdealTemp();
 

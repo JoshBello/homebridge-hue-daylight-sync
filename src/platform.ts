@@ -24,7 +24,6 @@ export class HueDaylightSyncPlatform implements DynamicPlatformPlugin {
   }
 
   discoverDevices() {
-    const deviceName = this.config.name || 'Daylight Sync';
     const uuid = this.api.hap.uuid.generate(PLUGIN_NAME);
 
     const existingAccessory = this.accessories.find((accessory) => accessory.UUID === uuid);
@@ -39,8 +38,8 @@ export class HueDaylightSyncPlatform implements DynamicPlatformPlugin {
       this.log.info('Restoring existing accessory from cache:', existingAccessory.displayName);
       new HueDaylightSyncAccessory(this, existingAccessory, validatedConfig);
     } else {
-      this.log.info('Adding new accessory:', deviceName);
-      const accessory = new this.api.platformAccessory(deviceName, uuid);
+      this.log.info('Adding new accessory');
+      const accessory = new this.api.platformAccessory('Daylight Sync', uuid);
       new HueDaylightSyncAccessory(this, accessory, validatedConfig);
       this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
     }
@@ -66,6 +65,7 @@ export class HueDaylightSyncPlatform implements DynamicPlatformPlugin {
       warmTemp: config.warmTemp || 2700,
       coolTemp: config.coolTemp || 6500,
       inputDebounceDelay: config.inputDebounceDelay || 750,
+      defaultAutoMode: config.defaultAutoMode ?? true,
     };
   }
 }
