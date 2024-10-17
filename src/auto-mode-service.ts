@@ -17,11 +17,8 @@ export class AutoModeService {
     private readonly config: Config,
   ) {
     this.isAutoMode = config.defaultAutoMode ?? true;
-
     this.service = this.accessory.getService('Auto Mode') || this.accessory.addService(this.platform.Service.Switch, 'Auto Mode', 'auto-mode');
-
     this.service.getCharacteristic(this.platform.Characteristic.On).onSet(this.setAutoMode.bind(this)).onGet(this.getAutoMode.bind(this));
-
     this.initializeAutoMode();
   }
 
@@ -31,6 +28,8 @@ export class AutoModeService {
     if (this.isAutoMode) {
       await this.updateTemperature();
       this.startAutoUpdate();
+    } else {
+      await this.lightService.updateBrightnessBasedOnTemperature();
     }
   }
 
@@ -42,6 +41,7 @@ export class AutoModeService {
       this.startAutoUpdate();
     } else {
       this.stopAutoUpdate();
+      await this.lightService.updateBrightnessBasedOnTemperature();
     }
   }
 
@@ -71,14 +71,14 @@ export class AutoModeService {
     }
     const currentTemp = this.lightService.getCurrentTemp();
     const targetTemp = await this.temperatureCalculator.calculateIdealTemp();
-
     this.platform.log.info(`Auto Mode Update - Current Temp: ${currentTemp}K, Target Temp: ${targetTemp}K`);
-
     if (currentTemp !== targetTemp) {
       this.platform.log.info(`Updating temperature from ${currentTemp}K to ${targetTemp}K`);
       await this.lightService.updateTemperature(targetTemp);
     } else {
       this.platform.log.debug(`Temperature remains unchanged at ${currentTemp}K`);
+      // Ensure brightness is updated even if temperature hasn't changed
+      await this.lightService.updateBrightnessBasedOnTemperature();
     }
   }
 }

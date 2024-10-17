@@ -2,14 +2,13 @@ import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
 import { HueDaylightSyncPlatform } from './platform';
 import { TemperatureCalculator } from './temperature-calculator';
 import { QueueProcessor } from './queue-processor';
-import { kelvinToMired, miredToKelvin, mapKelvinToBrightness, mapBrightnessToKelvin } from './utils';
+import { kelvinToMired, miredToKelvin, kelvinToSliderPosition, sliderPositionToKelvin } from './utils';
 
 export class LightService {
   private service: Service;
   private isOn = false;
   private currentTemp: number;
   private isUpdating = false;
-  private readonly inputDebounceDelay: number;
   private updateTimeout: NodeJS.Timeout | null = null;
 
   constructor(
@@ -17,68 +16,63 @@ export class LightService {
     private readonly accessory: PlatformAccessory,
     private readonly temperatureCalculator: TemperatureCalculator,
     private readonly queueProcessor: QueueProcessor,
-    inputDebounceDelay?: number,
+    private readonly inputDebounceDelay: number = 750,
   ) {
-    this.inputDebounceDelay = inputDebounceDelay ?? 750;
     this.currentTemp = this.temperatureCalculator.getWarmTemp();
+    this.service = this.setupService();
+  }
 
-    this.service = this.accessory.getService(this.platform.Service.Lightbulb) || this.accessory.addService(this.platform.Service.Lightbulb);
+  private setupService(): Service {
+    const service = this.accessory.getService(this.platform.Service.Lightbulb) || this.accessory.addService(this.platform.Service.Lightbulb);
+    service.setCharacteristic(this.platform.Characteristic.Name, 'Daylight Sync');
 
-    this.service.setCharacteristic(this.platform.Characteristic.Name, 'Daylight Sync');
+    service
+      .getCharacteristic(this.platform.Characteristic.On)
+      .onSet(this.setOn.bind(this))
+      .onGet(() => this.isOn);
 
-    this.service.getCharacteristic(this.platform.Characteristic.On).onSet(this.setOn.bind(this)).onGet(this.getOn.bind(this));
+    service
+      .getCharacteristic(this.platform.Characteristic.Brightness)
+      .onSet(this.setBrightness.bind(this))
+      .onGet(() => this.getSliderPosition());
 
-    this.service.getCharacteristic(this.platform.Characteristic.Brightness).onSet(this.setBrightness.bind(this)).onGet(this.getBrightness.bind(this));
-
-    this.service
+    service
       .getCharacteristic(this.platform.Characteristic.ColorTemperature)
       .onSet(this.setColorTemperature.bind(this))
-      .onGet(this.getColorTemperature.bind(this))
+      .onGet(() => kelvinToMired(this.currentTemp))
       .setProps({
         minValue: kelvinToMired(this.temperatureCalculator.getCoolTemp()),
         maxValue: kelvinToMired(this.temperatureCalculator.getWarmTemp()),
         minStep: 1,
       });
 
-    this.updateHomeKitCharacteristics();
+    this.updateHomeKitCharacteristics(service);
+    return service;
   }
 
   async setOn(value: CharacteristicValue) {
     this.isOn = value as boolean;
     this.platform.log.info('Set Characteristic On ->', value);
+    this.updateHomeKitCharacteristics();
+
     if (this.isOn) {
       this.debounceUpdate(() => this.updateLights(this.currentTemp));
-    } else {
-      this.updateHomeKitCharacteristics();
     }
   }
 
-  async getOn(): Promise<CharacteristicValue> {
-    return this.isOn;
-  }
-
   async setBrightness(value: CharacteristicValue) {
-    const brightness = value as number;
-    this.platform.log.info('Set Characteristic Brightness -> ', brightness);
-    const newTemp = mapBrightnessToKelvin(brightness, this.temperatureCalculator.getWarmTemp(), this.temperatureCalculator.getCoolTemp());
-    this.debounceUpdate(() => this.updateLights(newTemp));
-  }
-
-  async getBrightness(): Promise<CharacteristicValue> {
-    return mapKelvinToBrightness(this.currentTemp, this.temperatureCalculator.getWarmTemp(), this.temperatureCalculator.getCoolTemp());
+    const sliderPosition = value as number;
+    const newTemp = this.getKelvinFromSliderPosition(sliderPosition);
+    this.platform.log.info(`Brightness slider set to ${sliderPosition}%, corresponding to ${newTemp}K`);
+    await this.updateLights(newTemp);
   }
 
   async setColorTemperature(value: CharacteristicValue) {
     const mired = value as number;
     const kelvin = miredToKelvin(mired);
-    this.platform.log.info(`Set Characteristic ColorTemperature -> ${mired} mired (${kelvin}K)`);
+    const sliderPosition = this.getSliderPosition(kelvin);
+    this.platform.log.info(`Color temperature set to ${kelvin}K, corresponding to ${sliderPosition}% on brightness slider`);
     this.debounceUpdate(() => this.updateLights(kelvin));
-  }
-
-  async getColorTemperature(): Promise<CharacteristicValue> {
-    const mired = kelvinToMired(this.currentTemp);
-    this.platform.log.debug(`Current temperature ${this.currentTemp}K mapped to ${mired} mired`);
-    return mired;
   }
 
   getCurrentTemp(): number {
@@ -87,9 +81,28 @@ export class LightService {
 
   async updateTemperature(newTemp: number) {
     if (newTemp !== this.currentTemp) {
-      this.platform.log.info(`Updating temperature from ${this.currentTemp}K to ${newTemp}K`);
+      const sliderPosition = this.getSliderPosition(newTemp);
+      this.platform.log.info(`Updating temperature from ${this.currentTemp}K to ${newTemp}K (${sliderPosition}% on brightness slider)`);
+      this.currentTemp = newTemp;
+      this.updateHomeKitCharacteristics();
+      this.updateBrightnessBasedOnTemperature();
       this.debounceUpdate(() => this.updateLights(newTemp));
     }
+  }
+
+  async updateBrightnessBasedOnTemperature() {
+    const sliderPosition = this.getSliderPosition();
+    this.platform.log.info(`Updating brightness slider to ${sliderPosition}% based on current temperature ${this.currentTemp}K`);
+    this.service.updateCharacteristic(this.platform.Characteristic.Brightness, sliderPosition);
+    this.platform.log.debug(`Brightness characteristic value after update: ${this.service.getCharacteristic(this.platform.Characteristic.Brightness).value}`);
+  }
+
+  private getSliderPosition(temp: number = this.currentTemp): number {
+    return kelvinToSliderPosition(temp, this.temperatureCalculator.getWarmTemp(), this.temperatureCalculator.getCoolTemp());
+  }
+
+  private getKelvinFromSliderPosition(position: number): number {
+    return sliderPositionToKelvin(position, this.temperatureCalculator.getWarmTemp(), this.temperatureCalculator.getCoolTemp());
   }
 
   private debounceUpdate(updateFn: () => Promise<void>) {
@@ -110,13 +123,15 @@ export class LightService {
     }
   }
 
-  private updateHomeKitCharacteristics() {
+  private updateHomeKitCharacteristics(service: Service = this.service) {
     const mired = kelvinToMired(this.currentTemp);
-    const brightness = mapKelvinToBrightness(this.currentTemp, this.temperatureCalculator.getWarmTemp(), this.temperatureCalculator.getCoolTemp());
-    this.service.updateCharacteristic(this.platform.Characteristic.ColorTemperature, mired);
-    this.service.updateCharacteristic(this.platform.Characteristic.Brightness, brightness);
-    this.service.updateCharacteristic(this.platform.Characteristic.On, this.isOn);
-    this.platform.log.debug(`Updated HomeKit - ColorTemperature: ${mired} mired (${this.currentTemp}K), Brightness: ${brightness}%, On: ${this.isOn}`);
+    const sliderPosition = this.getSliderPosition();
+
+    service.updateCharacteristic(this.platform.Characteristic.ColorTemperature, mired);
+    service.updateCharacteristic(this.platform.Characteristic.Brightness, sliderPosition);
+    service.updateCharacteristic(this.platform.Characteristic.On, this.isOn);
+
+    this.platform.log.debug(`Updated HomeKit - ColorTemperature: ${this.currentTemp}K, Brightness Slider: ${sliderPosition}%, On: ${this.isOn}`);
   }
 
   private async performUpdate(): Promise<void> {
