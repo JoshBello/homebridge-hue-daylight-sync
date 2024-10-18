@@ -13,7 +13,7 @@ export class TemperatureCalculator {
     this.latitude = config.latitude;
     this.longitude = config.longitude;
     this.warmTemp = config.warmTemp || 2700;
-    this.coolTemp = config.coolTemp || 3000;
+    this.coolTemp = config.coolTemp || 6500;
     this.updateInterval = config.updateInterval || 300000; // 5 minutes
   }
 
@@ -30,26 +30,17 @@ export class TemperatureCalculator {
       return 0.5; // Return a default value
     }
 
-    const times = SunCalc.getTimes(now, this.latitude, this.longitude);
-    const solarNoon = times.solarNoon;
-    const nextSolarNoon = new Date(solarNoon.getTime() + 24 * 60 * 60 * 1000);
+    const sunPos = SunCalc.getPosition(now, this.latitude, this.longitude);
+    const altitude = sunPos.altitude; // Altitude in radians, from -π/2 to π/2
 
-    // Calculate the time difference between now and solar noon
-    let timeSinceNoon = now.getTime() - solarNoon.getTime();
+    // Normalize the altitude to a value between 0 and 1
+    const normalizedAltitude = Math.max(0, Math.sin(altitude));
 
-    // Adjust for the closest solar noon
-    if (Math.abs(timeSinceNoon) > 12 * 60 * 60 * 1000) {
-      // If more than 12 hours away, use the next or previous solar noon
-      timeSinceNoon = now.getTime() - nextSolarNoon.getTime();
-    }
+    // Apply an exponent to adjust the steepness of the curve
+    const exponent = 3; // Adjust this value to change the steepness
+    const transitionFactor = Math.pow(normalizedAltitude, exponent);
 
-    // Calculate the angle for the cosine function
-    const angle = (Math.PI * timeSinceNoon) / (12 * 60 * 60 * 1000); // Angle in radians over 24 hours
-
-    // Calculate the transition factor using the cosine function
-    const transitionFactor = (1 + Math.cos(angle)) / 2;
-
-    this.log.debug(`Cosine transition factor: ${transitionFactor}`);
+    this.log.debug(`Sun altitude: ${altitude.toFixed(4)} radians, Transition factor: ${transitionFactor.toFixed(4)}`);
 
     return transitionFactor;
   }
