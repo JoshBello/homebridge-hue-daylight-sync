@@ -36,12 +36,6 @@
         "minimum": -180,
         "maximum": 180
       },
-      "updateInterval": {
-        "title": "Update Interval (ms)",
-        "type": "integer",
-        "default": 300000,
-        "minimum": 1000
-      },
       "warmTemp": {
         "title": "Warm Temperature (K)",
         "type": "integer",
@@ -55,6 +49,12 @@
         "default": 2800,
         "minimum": 2000,
         "maximum": 6500
+      },
+      "updateInterval": {
+        "title": "Update Interval (ms)",
+        "type": "integer",
+        "default": 300000,
+        "minimum": 1000
       },
       "inputDebounceDelay": {
         "title": "Input Debounce Delay (ms)",

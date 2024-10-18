@@ -63,9 +63,9 @@ Add the following to your Homebridge `config.json` file:
       "apiToken": "YOUR_HUE_API_TOKEN",
       "latitude": "YOUR_LATITUDE",
       "longitude": "YOUR_LONGITUDE",
-      "updateInterval": 300000,
       "warmTemp": 2700,
       "coolTemp": 3000,
+      "updateInterval": 300000,
       "inputDebounceDelay": 750,
       "defaultAutoMode" : true
     }
@@ -75,15 +75,15 @@ Add the following to your Homebridge `config.json` file:
 
 ### Configuration Options
 
-- `bridgeIp`: The IP address of your Hue Bridge
-- `apiToken`: Your Hue API token
-- `latitude`: Your geographical latitude
-- `longitude`: Your geographical longitude
-- `updateInterval` (optional): Interval in milliseconds between temperature updates (default: 300000 - 5 minutes)
-- `warmTemp` (optional): Warmest color temperature in Kelvin (default: 2700K)
-- `coolTemp` (optional): Coolest color temperature in Kelvin (default: 3000K)
-- `inputDebounceDelay`: Prevents rapid, successive updates when adjusting the brightness slider or color temperature. (default: 750ms)
-- `defaultAutoMode` : Set to true to enable Auto Mode by default, false to disable. (default: true)
+- `bridgeIp` The IP address of your Hue Bridge
+- `apiToken` Your Hue API token
+- `latitude` Your geographical latitude
+- `longitude` Your geographical longitude
+- `warmTemp`  Warmest color temperature in Kelvin (default 2700K)
+- `coolTemp`  Coolest color temperature in Kelvin (default 3000K)
+- `updateInterval` Interval in milliseconds between temperature updates (default 300000 - 5 minutes)
+- `inputDebounceDelay` Prevents rapid, successive updates when adjusting the brightness slider or color temperature (default 750ms)
+- `defaultAutoMode` Set to true to enable Auto Mode by default, false to disable (default true)
 
 ## Usage
 
