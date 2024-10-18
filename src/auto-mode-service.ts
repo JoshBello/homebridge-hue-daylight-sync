@@ -8,18 +8,17 @@ export class AutoModeService {
   private service: Service;
   private isAutoMode: boolean;
   private autoUpdateInterval: NodeJS.Timeout | null = null;
+  private lightService!: LightService;
 
   constructor(
     private readonly platform: HueDaylightSyncPlatform,
     private readonly accessory: PlatformAccessory,
-    private readonly lightService: LightService,
     private readonly temperatureCalculator: TemperatureCalculator,
     private readonly config: Config,
   ) {
     this.isAutoMode = config.defaultAutoMode ?? true;
     this.service = this.accessory.getService('Auto Mode') || this.accessory.addService(this.platform.Service.Switch, 'Auto Mode', 'auto-mode');
     this.service.getCharacteristic(this.platform.Characteristic.On).onSet(this.setAutoMode.bind(this)).onGet(this.getAutoMode.bind(this));
-    this.initializeAutoMode();
   }
 
   private async initializeAutoMode() {
@@ -31,6 +30,11 @@ export class AutoModeService {
     } else {
       await this.lightService.updateBrightnessBasedOnTemperature();
     }
+  }
+
+  public setLightService(lightService: LightService) {
+    this.lightService = lightService;
+    this.initializeAutoMode();
   }
 
   async setAutoMode(value: CharacteristicValue) {
@@ -49,8 +53,18 @@ export class AutoModeService {
     return this.isAutoMode;
   }
 
+  public disableAutoModeDueToManualChange() {
+    if (this.isAutoMode) {
+      this.platform.log.info('Manual change detected. Disabling Auto Mode.');
+      this.isAutoMode = false;
+      this.service.updateCharacteristic(this.platform.Characteristic.On, this.isAutoMode);
+      this.stopAutoUpdate();
+    }
+  }
+
   private startAutoUpdate() {
     this.stopAutoUpdate();
+    this.updateTemperature();
     this.autoUpdateInterval = setInterval(() => {
       this.updateTemperature();
     }, this.temperatureCalculator.getUpdateInterval());

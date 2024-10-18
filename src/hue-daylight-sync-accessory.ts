@@ -15,12 +15,18 @@ export class HueDaylightSyncAccessory {
   constructor(private readonly platform: HueDaylightSyncPlatform, private readonly accessory: PlatformAccessory, private readonly config: Config) {
     this.temperatureCalculator = new TemperatureCalculator(config, platform.log);
     this.queueProcessor = new QueueProcessor(config, platform.log);
+    this.autoModeService = new AutoModeService(platform, accessory, this.temperatureCalculator, config);
 
-    this.lightService = new LightService(platform, accessory, this.temperatureCalculator, this.queueProcessor, config.inputDebounceDelay);
+    this.lightService = new LightService(
+      platform,
+      accessory,
+      this.temperatureCalculator,
+      this.queueProcessor,
+      () => this.autoModeService.disableAutoModeDueToManualChange(), // Callback
+      config.inputDebounceDelay,
+    );
 
-    this.autoModeService = new AutoModeService(platform, accessory, this.lightService, this.temperatureCalculator, config);
-
-    // Start processing the queue
+    this.autoModeService.setLightService(this.lightService);
     setInterval(() => this.queueProcessor.processQueue(), 100);
   }
 }

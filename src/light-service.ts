@@ -6,7 +6,7 @@ import { kelvinToMired, miredToKelvin, kelvinToSliderPosition, sliderPositionToK
 
 export class LightService {
   private service: Service;
-  private isOn = false;
+  private isOn = true;
   private currentTemp: number;
   private isUpdating = false;
   private updateTimeout: NodeJS.Timeout | null = null;
@@ -16,10 +16,12 @@ export class LightService {
     private readonly accessory: PlatformAccessory,
     private readonly temperatureCalculator: TemperatureCalculator,
     private readonly queueProcessor: QueueProcessor,
+    private readonly onManualChange: () => void,
     private readonly inputDebounceDelay: number = 750,
   ) {
     this.currentTemp = this.temperatureCalculator.getWarmTemp();
     this.service = this.setupService();
+    this.updateHomeKitCharacteristics();
   }
 
   private setupService(): Service {
@@ -46,7 +48,6 @@ export class LightService {
         minStep: 1,
       });
 
-    this.updateHomeKitCharacteristics(service);
     return service;
   }
 
@@ -64,7 +65,8 @@ export class LightService {
     const sliderPosition = value as number;
     const newTemp = this.getKelvinFromSliderPosition(sliderPosition);
     this.platform.log.info(`Brightness slider set to ${sliderPosition}%, corresponding to ${newTemp}K`);
-    await this.updateLights(newTemp);
+    this.onManualChange();
+    this.debounceUpdate(() => this.updateLights(newTemp));
   }
 
   async setColorTemperature(value: CharacteristicValue) {
@@ -72,6 +74,7 @@ export class LightService {
     const kelvin = miredToKelvin(mired);
     const sliderPosition = this.getSliderPosition(kelvin);
     this.platform.log.info(`Color temperature set to ${kelvin}K, corresponding to ${sliderPosition}% on brightness slider`);
+    this.onManualChange();
     this.debounceUpdate(() => this.updateLights(kelvin));
   }
 
@@ -80,14 +83,12 @@ export class LightService {
   }
 
   async updateTemperature(newTemp: number) {
-    if (newTemp !== this.currentTemp) {
-      const sliderPosition = this.getSliderPosition(newTemp);
-      this.platform.log.info(`Updating temperature from ${this.currentTemp}K to ${newTemp}K (${sliderPosition}% on brightness slider)`);
-      this.currentTemp = newTemp;
-      this.updateHomeKitCharacteristics();
-      this.updateBrightnessBasedOnTemperature();
-      this.debounceUpdate(() => this.updateLights(newTemp));
-    }
+    const sliderPosition = this.getSliderPosition(newTemp);
+    this.platform.log.info(`Updating temperature from ${this.currentTemp}K to ${newTemp}K (${sliderPosition}% on brightness slider)`);
+    this.currentTemp = newTemp;
+    this.updateHomeKitCharacteristics();
+    this.updateBrightnessBasedOnTemperature();
+    this.debounceUpdate(() => this.updateLights(newTemp));
   }
 
   async updateBrightnessBasedOnTemperature() {
