@@ -27,6 +27,12 @@ Hue Daylight Sync is a Homebridge plugin that automatically adjusts your Philips
 - Geolocation-based calculations for accurate sunlight mimicking
 - Manual override option with automatic mode switch
 
+## Auto Mode and Manual Adjustments
+
+- **Auto Mode**: Automatically adjusts your lights' color temperature based on the time of day. Enabled by default.
+- **Manual Adjustments**: Changing the brightness slider or color temperature in the Home app will disable Auto Mode, allowing you to set your preferred lighting.
+- **Re-Enabling Auto Mode**: To resume automatic adjustments, simply toggle the "Auto Mode" switch back on in the Home app.
+
 ## Prerequisites
 
 - [Homebridge](https://homebridge.io/) installed on your system
@@ -55,11 +61,13 @@ Add the following to your Homebridge `config.json` file:
       "name": "Hue Daylight Sync",
       "bridgeIp": "YOUR_HUE_BRIDGE_IP",
       "apiToken": "YOUR_HUE_API_TOKEN",
-      "latitude": YOUR_LATITUDE,
-      "longitude": YOUR_LONGITUDE,
+      "latitude": "YOUR_LATITUDE",
+      "longitude": "YOUR_LONGITUDE",
       "updateInterval": 300000,
       "warmTemp": 2700,
-      "coolTemp": 3000
+      "coolTemp": 3000,
+      "inputDebounceDelay": 750,
+      "defaultAutoMode" : true
     }
   ]
 }
@@ -74,6 +82,8 @@ Add the following to your Homebridge `config.json` file:
 - `updateInterval` (optional): Interval in milliseconds between temperature updates (default: 300000 - 5 minutes)
 - `warmTemp` (optional): Warmest color temperature in Kelvin (default: 2700K)
 - `coolTemp` (optional): Coolest color temperature in Kelvin (default: 3000K)
+- `inputDebounceDelay`: Prevents rapid, successive updates when adjusting the brightness slider or color temperature. (default: 750ms)
+- `defaultAutoMode` : Set to true to enable Auto Mode by default, false to disable. (default: true)
 
 ## Usage
 
