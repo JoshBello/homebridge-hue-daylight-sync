@@ -19,12 +19,13 @@ Hue Daylight Sync is a Homebridge plugin that automatically adjusts your Philips
 
 ## Features
 
+- Natural Bell Curve Color Temperature Transitions
+- Smooth, Gradual Changes: The plugin now uses a cosine function to create a smooth, bell-shaped curve for color temperature transitions throughout the day.
+- Enhanced Natural Lighting: Mimics the natural progression of daylight, providing a more comfortable and realistic lighting environment.
 - Automatic color temperature adjustment based on time of day
 - Customizable warm and cool temperature ranges
 - Geolocation-based calculations for accurate sunlight mimicking
 - Manual override option with automatic mode switch
-- Smooth transitions between color temperatures
-- Rate-limiting handling to prevent API abuse
 
 ## Prerequisites
 

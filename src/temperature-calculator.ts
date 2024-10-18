@@ -19,12 +19,11 @@ export class TemperatureCalculator {
 
   async calculateIdealTemp(): Promise<number> {
     const transitionFactor = this.calcTransitionFactor();
-    return Math.round(this.warmTemp + (this.coolTemp - this.warmTemp) * (1 - transitionFactor));
+    return Math.round(this.warmTemp + (this.coolTemp - this.warmTemp) * transitionFactor);
   }
 
   private calcTransitionFactor(): number {
     const now = new Date();
-    this.log.debug(`Current time: ${now.toISOString()}`);
 
     if (!this.latitude || !this.longitude) {
       this.log.error(`Invalid latitude (${this.latitude}) or longitude (${this.longitude})`);
@@ -32,32 +31,27 @@ export class TemperatureCalculator {
     }
 
     const times = SunCalc.getTimes(now, this.latitude, this.longitude);
-    this.log.debug(`Calculated sun times: ${JSON.stringify(times)}`);
+    const solarNoon = times.solarNoon;
+    const nextSolarNoon = new Date(solarNoon.getTime() + 24 * 60 * 60 * 1000);
 
-    const { dawn, sunrise, sunset, dusk } = times;
+    // Calculate the time difference between now and solar noon
+    let timeSinceNoon = now.getTime() - solarNoon.getTime();
 
-    // Check if any of the calculated times are invalid
-    if (!dawn || !sunrise || !sunset || !dusk) {
-      this.log.error('Invalid sun times calculated');
-      return 0.5; // Return a default value
+    // Adjust for the closest solar noon
+    if (Math.abs(timeSinceNoon) > 12 * 60 * 60 * 1000) {
+      // If more than 12 hours away, use the next or previous solar noon
+      timeSinceNoon = now.getTime() - nextSolarNoon.getTime();
     }
 
-    this.log.debug(`Dawn: ${dawn.toISOString()}, Sunrise: ${sunrise.toISOString()}, Sunset: ${sunset.toISOString()}, Dusk: ${dusk.toISOString()}`);
+    // Calculate the angle for the cosine function
+    const angle = (Math.PI * timeSinceNoon) / (12 * 60 * 60 * 1000); // Angle in radians over 24 hours
 
-    if (now <= dawn || now >= dusk) {
-      return 1.0;
-    }
-    if (now >= sunrise && now <= sunset) {
-      return 0.0;
-    }
-    if (now < sunrise) {
-      const factor = 1.0 - (now.getTime() - dawn.getTime()) / (sunrise.getTime() - dawn.getTime());
-      this.log.debug(`Morning transition factor: ${factor}`);
-      return factor;
-    }
-    const factor = (now.getTime() - sunset.getTime()) / (dusk.getTime() - sunset.getTime());
-    this.log.debug(`Evening transition factor: ${factor}`);
-    return factor;
+    // Calculate the transition factor using the cosine function
+    const transitionFactor = (1 + Math.cos(angle)) / 2;
+
+    this.log.debug(`Cosine transition factor: ${transitionFactor}`);
+
+    return transitionFactor;
   }
 
   getWarmTemp(): number {
