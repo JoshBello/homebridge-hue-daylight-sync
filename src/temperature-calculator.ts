@@ -8,6 +8,7 @@ export class TemperatureCalculator {
   private warmTemp: number;
   private coolTemp: number;
   private updateInterval: number;
+  private curveExponent: number;
 
   constructor(config: Config, private readonly log: Logger) {
     this.latitude = config.latitude;
@@ -15,6 +16,7 @@ export class TemperatureCalculator {
     this.warmTemp = config.warmTemp || 2700;
     this.coolTemp = config.coolTemp || 6500;
     this.updateInterval = config.updateInterval || 300000; // 5 minutes
+    this.curveExponent = config.curveExponent || 3;
   }
 
   async calculateIdealTemp(): Promise<number> {
@@ -27,18 +29,17 @@ export class TemperatureCalculator {
 
     if (!this.latitude || !this.longitude) {
       this.log.error(`Invalid latitude (${this.latitude}) or longitude (${this.longitude})`);
-      return 0.5; // Return a default value
+      return 0.5; // Default value
     }
 
     const sunPos = SunCalc.getPosition(now, this.latitude, this.longitude);
-    const altitude = sunPos.altitude; // Altitude in radians, from -π/2 to π/2
+    const altitude = sunPos.altitude; // Altitude in radians
 
     // Normalize the altitude to a value between 0 and 1
     const normalizedAltitude = Math.max(0, Math.sin(altitude));
 
-    // Apply an exponent to adjust the steepness of the curve
-    const exponent = 3; // Adjust this value to change the steepness
-    const transitionFactor = Math.pow(normalizedAltitude, exponent);
+    // Use the configured exponent to adjust the curve
+    const transitionFactor = Math.pow(normalizedAltitude, this.curveExponent);
 
     this.log.debug(`Sun altitude: ${altitude.toFixed(4)} radians, Transition factor: ${transitionFactor.toFixed(4)}`);
 

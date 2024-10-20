@@ -50,6 +50,14 @@
         "minimum": 2000,
         "maximum": 6500
       },
+      "curveExponent": {
+        "title": "Curve Exponent",
+        "type": "number",
+        "minimum": 0.1,
+        "maximum": 10,
+        "default": 3,
+        "description": "Adjusts the steepness of the transition curve."
+      },
       "updateInterval": {
         "title": "Update Interval (ms)",
         "type": "integer",
