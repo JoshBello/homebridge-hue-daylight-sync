@@ -1,0 +1,375 @@
+<div id="main" class="card">
+  <div class="header">
+    <h2><strong>Hue Daylight Sync</strong></h2>
+    <h6>Automated Philips Hue Light Adjustment for Natural Daylight Cycles</h6>
+  </div>
+
+  <div>
+    <canvas id="temperatureChart"></canvas>
+  </div>
+
+  <div class="mt-4">
+    <div class="form-group">
+      <h6><strong>Temperature Range (K):</strong></h6>
+      <div class="input-group">
+        <div class="slider-track"></div>
+        <input type="range" id="warmTemp" class="form-range" min="2000" max="6500" step="100" />
+        <input type="range" id="coolTemp" class="form-range" min="2000" max="6500" step="100" />
+      </div>
+      <div class="d-flex justify-content-between">
+        <input type="number" id="warmTempNumber" class="form-control" min="2000" max="6500" step="100" />
+        <input type="number" id="coolTempNumber" class="form-control" min="2000" max="6500" step="100" />
+      </div>
+    </div>
+    <div class="form-group">
+      <h6><strong>Curve Exponent:</strong></h6>
+      <div>
+        <input type="number" id="curveExponent" class="form-control" step="0.1" min="0.1" max="10" />
+      </div>
+    </div>
+    <button class="btn btn-primary save" id="saveSettings">Save Settings</button>
+  </div>
+</div>
+
+<style>
+  body {
+    background-color: #1a1a1a;
+    color: #e0e0e0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  .btn {
+    margin: 0px !important;
+    margin-top: 10px !important;
+    width: 100% !important;
+    height: 35px !important;
+  }
+
+  .header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .card {
+    background: linear-gradient(145deg, #2a2a2a, #222);
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+  }
+
+  h2,
+  h5,
+  h6 {
+    text-shadow: 0 2px 4px rgba(255, 157, 0, 0.1);
+  }
+
+  .input-group {
+    position: relative;
+    height: 20px;
+    margin: 20px 0;
+  }
+
+  .form-range {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 8px;
+    background: transparent;
+    outline: none;
+    opacity: 1;
+    transition: opacity 0.2s;
+    pointer-events: none;
+  }
+
+  .form-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    pointer-events: auto;
+    position: relative;
+    z-index: 3;
+  }
+
+  .form-range::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    pointer-events: auto;
+    position: relative;
+    z-index: 3;
+  }
+
+  #warmTemp,
+  #coolTemp {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+
+  .slider-track {
+    width: 100%;
+    height: 8px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: linear-gradient(to right, #ff6b00 10%, #64ccf1 100%);
+    border-radius: 5px;
+    z-index: 1;
+  }
+
+  .form-control {
+    width: 48%;
+    background-color: #444;
+    border: none;
+    color: #e0e0e0;
+    border-radius: 5px;
+    margin-top: 0;
+    padding: 10px;
+    margin-bottom: 20px;
+    transition: background-color 0.3s, box-shadow 0.3s;
+  }
+
+  .form-control:focus {
+    background-color: #555;
+    color: #ffffff;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(255, 157, 0, 0.5);
+  }
+
+  #temperatureChart {
+    width: 100%;
+    height: 600px;
+    margin-top: 10px;
+    border-radius: 10px;
+    background: linear-gradient(145deg, #222, #2a2a2a);
+    box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+</style>
+
+<script>
+  (async () => {
+    const GLOBAL = {
+      temperatureChart: null,
+      config: null,
+      constraints: {
+        tempRange: { min: 2000, max: 6500 },
+        curveExponent: { min: 0.1, max: 10 },
+      },
+    };
+
+    async function loadConfig() {
+      try {
+        GLOBAL.config = await homebridge.getPluginConfig();
+        if (!GLOBAL.config || !GLOBAL.config.length) {
+          GLOBAL.config = [
+            {
+              warmTemp: 2700,
+              coolTemp: 6500,
+              curveExponent: 3,
+            },
+          ];
+        }
+        updateUI();
+      } catch (error) {
+        console.error('Failed to load config:', error);
+        homebridge.toast.error('Failed to load configuration. Please try restarting Homebridge.');
+      }
+    }
+
+    function updateUI() {
+      $('#warmTemp')
+        .val(GLOBAL.config[0].warmTemp || 2700)
+        .attr('min', GLOBAL.constraints.tempRange.min)
+        .attr('max', GLOBAL.constraints.tempRange.max);
+      $('#coolTemp')
+        .val(GLOBAL.config[0].coolTemp || 6500)
+        .attr('min', GLOBAL.constraints.tempRange.min)
+        .attr('max', GLOBAL.constraints.tempRange.max);
+      $('#curveExponent')
+        .val(GLOBAL.config[0].curveExponent || 3)
+        .attr('min', GLOBAL.constraints.curveExponent.min)
+        .attr('max', GLOBAL.constraints.curveExponent.max);
+
+      updateRangeInputs();
+      updateCurveExponent();
+      updateChart();
+    }
+
+    function updateChart() {
+      const warmTemp = parseInt($('#warmTemp').val(), 10);
+      const coolTemp = parseInt($('#coolTemp').val(), 10);
+      const curveExponent = parseFloat($('#curveExponent').val());
+
+      const ctx = $('#temperatureChart')[0].getContext('2d');
+
+      const hours = Array.from({ length: 24 }, (_, i) => i);
+      const temperatures = hours.map((hour) => {
+        const sunPosition = Math.sin((hour / 24) * Math.PI);
+        const factor = Math.pow(Math.max(0, sunPosition), curveExponent);
+        return warmTemp + (coolTemp - warmTemp) * factor;
+      });
+
+      if (GLOBAL.temperatureChart) {
+        GLOBAL.temperatureChart.data.datasets[0].data = temperatures;
+        GLOBAL.temperatureChart.update();
+      } else {
+        GLOBAL.temperatureChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: hours,
+            datasets: [
+              {
+                label: 'Color Temperature (K)',
+                data: temperatures,
+                borderColor: 'rgb(192, 112, 0)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                fill: false,
+                tension: 0.4,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: {
+                title: {
+                  display: true,
+                  text: 'Hour of Day',
+                  color: 'rgba(230, 230, 230)',
+                  font: { weight: 'bold' },
+                },
+                ticks: { color: 'rgba(230, 230, 230)' },
+                grid: { color: 'rgba(200, 200, 200, 0.1)' },
+              },
+              y: {
+                title: {
+                  display: true,
+                  text: 'Color Temperature (K)',
+                  color: 'rgba(230, 230, 230)',
+                  font: { weight: 'bold' },
+                },
+                beginAtZero: false,
+                min: GLOBAL.constraints.tempRange.min,
+                max: 7000,
+                ticks: { color: 'rgba(230, 230, 230)' },
+                grid: { color: 'rgba(200, 200, 200, 0.1)' },
+              },
+            },
+            layout: {
+              padding: {
+                left: 5,
+                right: 0,
+                top: 30,
+                bottom: 5,
+              },
+            },
+            plugins: {
+              legend: {
+                display: false,
+              },
+            },
+            elements: {
+              point: {
+                radius: 0,
+              },
+            },
+          },
+        });
+      }
+    }
+
+    function updateRangeInputs() {
+      const minVal = parseInt($('#warmTemp').val());
+      const maxVal = parseInt($('#coolTemp').val());
+
+      if (minVal > maxVal) {
+        $('#coolTemp').val(minVal);
+      }
+
+      $('#warmTempNumber').val(minVal);
+      $('#coolTempNumber').val(maxVal);
+      $('#tempRangeValue').text(`${minVal}K - ${maxVal}K`);
+    }
+
+    function updateCurveExponent() {
+      const value = $('#curveExponent').val();
+      $('#curveExponentValue').text(value);
+    }
+
+    async function saveConfig() {
+      const warmTemp = parseInt($('#warmTemp').val(), 10);
+      const coolTemp = parseInt($('#coolTemp').val(), 10);
+      const curveExponent = parseFloat($('#curveExponent').val());
+
+      if (isNaN(warmTemp) || isNaN(coolTemp) || isNaN(curveExponent)) {
+        homebridge.toast.error('Invalid input. Please check your values.', 'Error');
+        return;
+      }
+
+      if (warmTemp >= coolTemp) {
+        homebridge.toast.error('Warm temperature must be less than cool temperature.', 'Error');
+        return;
+      }
+
+      const newConfig = {
+        ...GLOBAL.config[0],
+        warmTemp,
+        coolTemp,
+        curveExponent,
+      };
+
+      try {
+        await homebridge.updatePluginConfig([newConfig]);
+        await homebridge.savePluginConfig();
+        homebridge.toast.success('Settings saved successfully!');
+        GLOBAL.config[0] = newConfig;
+        console.log('Saved config:', GLOBAL.config);
+      } catch (error) {
+        console.error('Failed to save config:', error);
+        homebridge.toast.error('Failed to save settings. Please try again.', 'Error');
+      }
+    }
+
+    // Initialize
+    await loadConfig();
+
+    // Event Listeners
+    $('#warmTemp, #coolTemp').on('input', function () {
+      updateRangeInputs();
+      updateChart();
+    });
+
+    $('#warmTempNumber, #coolTempNumber').on('input', function () {
+      const minVal = parseInt($('#warmTempNumber').val());
+      const maxVal = parseInt($('#coolTempNumber').val());
+
+      $('#warmTemp').val(minVal);
+      $('#coolTemp').val(maxVal);
+
+      updateRangeInputs();
+      updateChart();
+    });
+
+    $('#curveExponent').on('input', function () {
+      updateCurveExponent();
+      updateChart();
+    });
+
+    $('#saveSettings').on('click', saveConfig);
+  })();
+</script>
+
+<script src="js/modules/jquery.min.js"></script>
+<script src="js/modules/chart.js"></script>
