@@ -19,7 +19,7 @@ Hue Daylight Sync is a Homebridge plugin that automatically adjusts your Philips
 
 ## Demo
 
-<img src="demo.gif" height="300px">  
+<img src="demo.gif" height="400px">  
 
 ## Features
 
@@ -69,6 +69,7 @@ Add the following to your Homebridge `config.json` file:
       "longitude": "YOUR_LONGITUDE",
       "warmTemp": 2700,
       "coolTemp": 3000,
+      "curveExponent": 3,
       "updateInterval": 300000,
       "inputDebounceDelay": 750,
       "defaultAutoMode" : true
@@ -85,6 +86,7 @@ Add the following to your Homebridge `config.json` file:
 - `longitude` Your geographical longitude
 - `warmTemp`  Warmest color temperature in Kelvin (default 2700K)
 - `coolTemp`  Coolest color temperature in Kelvin (default 3000K)
+- `curveExponent`   Adjusts the steepness of the transition curve (default 3)
 - `updateInterval` Interval in milliseconds between temperature updates (default 300000 - 5 minutes)
 - `inputDebounceDelay` Prevents rapid, successive updates when adjusting the brightness slider or color temperature (default 750ms)
 - `defaultAutoMode` Set to true to enable Auto Mode by default, false to disable (default true)
