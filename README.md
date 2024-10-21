@@ -19,9 +19,7 @@ Hue Daylight Sync is a Homebridge plugin that automatically adjusts your Philips
 
 ## Demo
 
-<video width="320" height="240" controls>
-  <source src="demo.mp4" type="video/mp4">
-</video>
+<img src="demo.gif" height="300px">  
 
 ## Features
 
