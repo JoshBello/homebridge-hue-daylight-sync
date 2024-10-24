@@ -82,8 +82,8 @@ Add the following to your Homebridge `config.json` file:
 
 - `bridgeIp` The IP address of your Hue Bridge
 - `apiToken` Your Hue API token
-- `latitude` Your geographical decimal degrees latitude (e.g. London - 51.5072)
-- `longitude` Your geographical decimal degrees longitude (e.g. London - 0.1276)
+- `latitude` Your geographical decimal degrees latitude (e.g.  London UK - 51.5072)
+- `longitude` Your geographical decimal degrees longitude (e.g.  London UK - 0.1276)
 - `warmTemp`  Warmest color temperature in Kelvin (default 2700K)
 - `coolTemp`  Coolest color temperature in Kelvin (default 3000K)
 - `curveExponent`   Adjusts the steepness of the transition curve (default 3)
