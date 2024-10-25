@@ -65,8 +65,8 @@ Add the following to your Homebridge `config.json` file:
       "name": "Hue Daylight Sync",
       "bridgeIp": "YOUR_HUE_BRIDGE_IP",
       "apiToken": "YOUR_HUE_API_TOKEN",
-      "latitude": "YOUR_LATITUDE",
-      "longitude": "YOUR_LONGITUDE",
+      "latitude": 51.5072,  // Replace with your latitude
+      "longitude": 0.1276,  // Replace with your longitude
       "warmTemp": 2700,
       "coolTemp": 3000,
       "curveExponent": 3,
@@ -80,16 +80,22 @@ Add the following to your Homebridge `config.json` file:
 
 ### Configuration Options
 
-- `bridgeIp` The IP address of your Hue Bridge
-- `apiToken` Your Hue API token
-- `latitude` Your geographical decimal degrees latitude (e.g.  London UK - 51.5072)
-- `longitude` Your geographical decimal degrees longitude (e.g.  London UK - 0.1276)
-- `warmTemp`  Warmest color temperature in Kelvin (default 2700K)
-- `coolTemp`  Coolest color temperature in Kelvin (default 3000K)
-- `curveExponent`   Adjusts the steepness of the transition curve (default 3)
-- `updateInterval` Interval in milliseconds between temperature updates (default 300000 - 5 minutes)
-- `inputDebounceDelay` Prevents rapid, successive updates when adjusting the brightness slider or color temperature (default 750ms)
-- `defaultAutoMode` Set to true to enable Auto Mode by default, false to disable (default true)
+| Option | Type | Description | Default |
+|--------|------|-------------|---------|
+| `bridgeIp` | `string` | The IP address of your Hue Bridge | Required |
+| `apiToken` | `string` | Your Hue API token | Required |
+| `latitude` | `number` | Your geographical decimal degrees latitude. Example: 51.5072 for London, but use your location's coordinates | Required |
+| `longitude` | `number` | Your geographical decimal degrees longitude. Example: 0.1276 for London, but use your location's coordinates | Required |
+| `warmTemp` | `number` | Warmest color temperature in Kelvin | 2700 |
+| `coolTemp` | `number` | Coolest color temperature in Kelvin | 3000 |
+| `curveExponent` | `number` | Adjusts the steepness of the transition curve | 3 |
+| `updateInterval` | `number` | Interval in milliseconds between temperature updates | 300000 (5 minutes) |
+| `inputDebounceDelay` | `number` | Delay in milliseconds to prevent rapid successive updates | 750 |
+| `defaultAutoMode` | `boolean` | Enable Auto Mode by default | true |
+
+**Note**: For `latitude` and `longitude`, you must enter the coordinates for your specific location. The values shown in the example are for London, UK - make sure to replace these with your own coordinates.
+
+You can find your coordinates using online services like Google Maps or websites like https://www.latlong.net/
 
 ## Usage
 
