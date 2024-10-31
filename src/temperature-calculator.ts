@@ -60,12 +60,15 @@ export class TemperatureCalculator {
     // Ensure we don't exceed 1.0
     transitionFactor = Math.min(1, transitionFactor);
 
+    const currentAltitudeDegrees = (currentAltitude * 180) / Math.PI;
+    const maxAltitudeDegrees = (maxAltitude * 180) / Math.PI;
+
     this.log.info(
-      `Current altitude: ${currentAltitude.toFixed(4)} radians, ` +
-        `Max altitude: ${maxAltitude.toFixed(4)} radians, ` +
-        `Time: ${now.toLocaleTimeString()}, ` +
-        `Solar noon: ${solarNoon.toLocaleTimeString()}, ` +
-        `Transition factor: ${transitionFactor.toFixed(4)}`,
+      `Time: ${now.toLocaleTimeString()}\n` +
+        `Solar noon: ${solarNoon.toLocaleTimeString()}\n` +
+        `Current altitude: ${currentAltitudeDegrees.toFixed(2)}°\n` +
+        `Max altitude: ${maxAltitudeDegrees.toFixed(2)}°\n` +
+        `Transition factor: ${(transitionFactor * 100).toFixed(1)}%`,
     );
 
     return transitionFactor;
