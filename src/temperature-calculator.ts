@@ -32,16 +32,41 @@ export class TemperatureCalculator {
       return 0.5; // Default value
     }
 
+    // Get current sun position and times
     const sunPos = SunCalc.getPosition(now, this.latitude, this.longitude);
-    const altitude = sunPos.altitude; // Altitude in radians
+    const times = SunCalc.getTimes(now, this.latitude, this.longitude);
 
-    // Normalize the altitude to a value between 0 and 1
-    const normalizedAltitude = Math.max(0, Math.sin(altitude));
+    // Get the maximum altitude for today
+    const solarNoon = times.solarNoon;
+    const maxSunPos = SunCalc.getPosition(solarNoon, this.latitude, this.longitude);
+    const maxAltitude = maxSunPos.altitude;
 
-    // Use the configured exponent to adjust the curve
-    const transitionFactor = Math.pow(normalizedAltitude, this.curveExponent);
+    // Current altitude in radians
+    const currentAltitude = sunPos.altitude;
 
-    this.log.debug(`Sun altitude: ${altitude.toFixed(4)} radians, Transition factor: ${transitionFactor.toFixed(4)}`);
+    // Before sunrise or after sunset
+    if (currentAltitude <= 0) {
+      this.log.debug(`Night time, altitude: ${currentAltitude.toFixed(4)}, factor: 0`);
+      return 0;
+    }
+
+    // Normalize current altitude relative to today's maximum possible altitude
+    // This ensures we reach 1.0 at solar noon regardless of season
+    let transitionFactor = currentAltitude / maxAltitude;
+
+    // Apply the curve exponent to shape the transition
+    transitionFactor = Math.pow(transitionFactor, this.curveExponent);
+
+    // Ensure we don't exceed 1.0
+    transitionFactor = Math.min(1, transitionFactor);
+
+    this.log.debug(
+      `Current altitude: ${currentAltitude.toFixed(4)} radians, ` +
+        `Max altitude: ${maxAltitude.toFixed(4)} radians, ` +
+        `Time: ${now.toLocaleTimeString()}, ` +
+        `Solar noon: ${solarNoon.toLocaleTimeString()}, ` +
+        `Transition factor: ${transitionFactor.toFixed(4)}`,
+    );
 
     return transitionFactor;
   }
