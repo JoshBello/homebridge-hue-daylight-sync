@@ -46,7 +46,7 @@ export class TemperatureCalculator {
 
     // Before sunrise or after sunset
     if (currentAltitude <= 0) {
-      this.log.debug(`Night time, altitude: ${currentAltitude.toFixed(4)}, factor: 0`);
+      this.log.info(`Night time, altitude: ${currentAltitude.toFixed(4)}, factor: 0`);
       return 0;
     }
 
@@ -60,7 +60,7 @@ export class TemperatureCalculator {
     // Ensure we don't exceed 1.0
     transitionFactor = Math.min(1, transitionFactor);
 
-    this.log.debug(
+    this.log.info(
       `Current altitude: ${currentAltitude.toFixed(4)} radians, ` +
         `Max altitude: ${maxAltitude.toFixed(4)} radians, ` +
         `Time: ${now.toLocaleTimeString()}, ` +
