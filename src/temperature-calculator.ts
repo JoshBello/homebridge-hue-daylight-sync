@@ -63,13 +63,13 @@ export class TemperatureCalculator {
     const currentAltitudeDegrees = (currentAltitude * 180) / Math.PI;
     const maxAltitudeDegrees = (maxAltitude * 180) / Math.PI;
 
-    this.log.info(
-      `Time: ${now.toLocaleTimeString()}\n` +
-        `Solar noon: ${solarNoon.toLocaleTimeString()}\n` +
-        `Current altitude: ${currentAltitudeDegrees.toFixed(2)}°\n` +
-        `Max altitude: ${maxAltitudeDegrees.toFixed(2)}°\n` +
-        `Transition factor: ${(transitionFactor * 100).toFixed(1)}%`,
-    );
+    this.log.info('----------------------------------------');
+    this.log.info(`Time: ${now.toLocaleTimeString()}`);
+    this.log.info(`Solar Noon: ${solarNoon.toLocaleTimeString()}`);
+    this.log.info(`Current Altitude: ${currentAltitudeDegrees.toFixed(2)}°`);
+    this.log.info(`Max Altitude: ${maxAltitudeDegrees.toFixed(2)}°`);
+    this.log.info(`Transition Factor: ${(transitionFactor * 100).toFixed(1)}%`);
+    this.log.info('----------------------------------------');
 
     return transitionFactor;
   }
