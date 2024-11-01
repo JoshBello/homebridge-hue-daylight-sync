@@ -53,7 +53,7 @@ export class LightService {
 
   async setOn(value: CharacteristicValue) {
     this.isOn = value as boolean;
-    this.platform.log.info('Set Characteristic On ->', value);
+    this.platform.log.info('Set Characteristic On:', value);
     this.updateHomeKitCharacteristics();
 
     if (this.isOn) {
@@ -64,7 +64,13 @@ export class LightService {
   async setBrightness(value: CharacteristicValue) {
     const sliderPosition = value as number;
     const newTemp = this.getKelvinFromSliderPosition(sliderPosition);
-    this.platform.log.info(`Brightness slider set to ${sliderPosition}%, corresponding to ${newTemp}K`);
+
+    this.platform.log.info('----------------------------------------');
+    this.platform.log.info('Manual Update');
+    this.platform.log.info(`Brightness Slider: ${sliderPosition}%`);
+    this.platform.log.info(`Target Temp: ${newTemp}K`);
+    this.platform.log.info('----------------------------------------');
+
     this.onManualChange();
     this.debounceUpdate(() => this.updateLights(newTemp));
   }
@@ -73,7 +79,13 @@ export class LightService {
     const mired = value as number;
     const kelvin = miredToKelvin(mired);
     const sliderPosition = this.getSliderPosition(kelvin);
-    this.platform.log.info(`Color temperature set to ${kelvin}K, corresponding to ${sliderPosition}% on brightness slider`);
+
+    this.platform.log.info('----------------------------------------');
+    this.platform.log.info('Manual Update');
+    this.platform.log.info(`Color Slider: ${kelvin}K`);
+    this.platform.log.info(`Slider Position: ${sliderPosition}%`);
+    this.platform.log.info('----------------------------------------');
+
     this.onManualChange();
     this.debounceUpdate(() => this.updateLights(kelvin));
   }
@@ -84,7 +96,7 @@ export class LightService {
 
   async updateTemperature(newTemp: number) {
     const sliderPosition = this.getSliderPosition(newTemp);
-    this.platform.log.info(`Updating temperature from ${this.currentTemp}K to ${newTemp}K (${sliderPosition}% on brightness slider)`);
+    this.platform.log.info(`Brightness Slider: ${sliderPosition}%`);
     this.currentTemp = newTemp;
     this.updateHomeKitCharacteristics();
     this.updateBrightnessBasedOnTemperature();
@@ -93,7 +105,6 @@ export class LightService {
 
   async updateBrightnessBasedOnTemperature() {
     const sliderPosition = this.getSliderPosition();
-    this.platform.log.info(`Updating brightness slider to ${sliderPosition}% based on current temperature ${this.currentTemp}K`);
     this.service.updateCharacteristic(this.platform.Characteristic.Brightness, sliderPosition);
     this.platform.log.debug(`Brightness characteristic value after update: ${this.service.getCharacteristic(this.platform.Characteristic.Brightness).value}`);
   }
@@ -144,9 +155,7 @@ export class LightService {
     this.isUpdating = true;
 
     try {
-      this.platform.log.info(`Updating lights to ${this.currentTemp}K`);
       await this.queueProcessor.updateLightsColor(this.currentTemp);
-      this.platform.log.info(`Lights updated to ${this.currentTemp}K`);
       this.updateHomeKitCharacteristics();
     } catch (error) {
       this.platform.log.error('Error updating lights:', error);

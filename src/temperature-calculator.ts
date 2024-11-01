@@ -40,13 +40,22 @@ export class TemperatureCalculator {
     const solarNoon = times.solarNoon;
     const maxSunPos = SunCalc.getPosition(solarNoon, this.latitude, this.longitude);
     const maxAltitude = maxSunPos.altitude;
+    const maxAltitudeDegrees = (maxAltitude * 180) / Math.PI;
 
     // Current altitude in radians
     const currentAltitude = sunPos.altitude;
+    const currentAltitudeDegrees = (currentAltitude * 180) / Math.PI;
 
     // Before sunrise or after sunset
     if (currentAltitude <= 0) {
-      this.log.info(`Night time, altitude: ${currentAltitude.toFixed(4)}, factor: 0`);
+      this.log.info('----------------------------------------');
+      this.log.info(`Night Time: ${now.toLocaleTimeString()}`);
+      this.log.info(`Solar Noon: ${solarNoon.toLocaleTimeString()}`);
+      this.log.info(`Current Altitude: ${currentAltitudeDegrees.toFixed(2)}°`);
+      this.log.info(`Max Altitude: ${maxAltitudeDegrees.toFixed(2)}°`);
+      this.log.info('Transition Factor: 0');
+      this.log.info('----------------------------------------');
+
       return 0;
     }
 
@@ -60,11 +69,8 @@ export class TemperatureCalculator {
     // Ensure we don't exceed 1.0
     transitionFactor = Math.min(1, transitionFactor);
 
-    const currentAltitudeDegrees = (currentAltitude * 180) / Math.PI;
-    const maxAltitudeDegrees = (maxAltitude * 180) / Math.PI;
-
     this.log.info('----------------------------------------');
-    this.log.info(`Time: ${now.toLocaleTimeString()}`);
+    this.log.info(`Day Time: ${now.toLocaleTimeString()}`);
     this.log.info(`Solar Noon: ${solarNoon.toLocaleTimeString()}`);
     this.log.info(`Current Altitude: ${currentAltitudeDegrees.toFixed(2)}°`);
     this.log.info(`Max Altitude: ${maxAltitudeDegrees.toFixed(2)}°`);

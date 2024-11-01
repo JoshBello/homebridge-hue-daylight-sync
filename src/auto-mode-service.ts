@@ -22,7 +22,7 @@ export class AutoModeService {
   }
 
   private async initializeAutoMode() {
-    this.platform.log.info(`Initializing Auto Mode: ${this.isAutoMode ? 'ON' : 'OFF'}`);
+    this.platform.log.info(`Auto Mode: ${this.isAutoMode ? 'ON' : 'OFF'}`);
     this.service.updateCharacteristic(this.platform.Characteristic.On, this.isAutoMode);
     if (this.isAutoMode) {
       await this.updateTemperature();
@@ -39,7 +39,7 @@ export class AutoModeService {
 
   async setAutoMode(value: CharacteristicValue) {
     this.isAutoMode = value as boolean;
-    this.platform.log.info('Set Auto Mode ->', value);
+    this.platform.log.info('Auto Mode:', value);
     if (this.isAutoMode) {
       await this.updateTemperature();
       this.startAutoUpdate();
@@ -55,7 +55,7 @@ export class AutoModeService {
 
   public disableAutoModeDueToManualChange() {
     if (this.isAutoMode) {
-      this.platform.log.info('Manual change detected. Disabling Auto Mode.');
+      this.platform.log.info('Manual Change Detected: Auto Mode Disabled');
       this.isAutoMode = false;
       this.service.updateCharacteristic(this.platform.Characteristic.On, this.isAutoMode);
       this.stopAutoUpdate();
@@ -75,7 +75,7 @@ export class AutoModeService {
     if (this.autoUpdateInterval) {
       clearInterval(this.autoUpdateInterval);
       this.autoUpdateInterval = null;
-      this.platform.log.debug('Auto update stopped');
+      this.platform.log.debug('Auto Update Stopped');
     }
   }
 
@@ -85,9 +85,13 @@ export class AutoModeService {
     }
     const currentTemp = this.lightService.getCurrentTemp();
     const targetTemp = await this.temperatureCalculator.calculateIdealTemp();
-    this.platform.log.info(`Auto Mode Update - Current Temp: ${currentTemp}K, Target Temp: ${targetTemp}K`);
+
+    this.platform.log.info('Auto Mode Update');
+    this.platform.log.info(`Current Temp: ${currentTemp}K`);
+    this.platform.log.info(`Target Temp: ${targetTemp}K`);
+    this.platform.log.info('----------------------------------------');
+
     if (currentTemp !== targetTemp) {
-      this.platform.log.info(`Updating temperature from ${currentTemp}K to ${targetTemp}K`);
       await this.lightService.updateTemperature(targetTemp);
     } else {
       this.platform.log.debug(`Temperature remains unchanged at ${currentTemp}K`);

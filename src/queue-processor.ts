@@ -127,16 +127,16 @@ export class QueueProcessor {
         httpsAgent: new https.Agent({ rejectUnauthorized: false }),
       });
       if (response.status === 200) {
-        this.log.info(`${lightName} has been updated to ${kelvin}K`);
+        this.log.info(`${lightName}: ${kelvin}K`);
       } else {
-        this.log.error(`Failed to change ${lightName}: ${response.status}`);
+        this.log.error(`Failed to Change ${lightName}: ${response.status}`);
       }
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 429) {
-        this.log.warn(`Rate limit hit for ${lightName}, re-queueing`);
+        this.log.warn(`Rate Limit Hit for ${lightName}, Re-Queueing`);
         this.queueLightUpdate(lightId, lightName, kelvin);
       } else if (error instanceof Error) {
-        this.log.error(`Error updating ${lightName}: ${error.message}`);
+        this.log.error(`Error Updating ${lightName}: ${error.message}`);
       } else {
         this.log.error(`Unknown error updating ${lightName}`);
       }
