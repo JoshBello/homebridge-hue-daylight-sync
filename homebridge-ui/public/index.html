@@ -4,29 +4,76 @@
     <h6>Automated Philips Hue Light Adjustment for Natural Daylight Cycles</h6>
   </div>
 
-  <div>
-    <canvas id="temperatureChart"></canvas>
+    <!-- Bridge Settings Section -->
+  <div class="section">
+    <h6 class="section-header"><strong>Bridge Settings</strong></h6>
+    <div class="form-group">
+      <label class="form-label">Bridge IP:</label>
+      <input type="text" id="bridgeIp" class="form-control" placeholder="Enter Hue Bridge IP" pattern="\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">API Token:</label>
+      <input type="text" id="apiToken" class="form-control" placeholder="Enter Hue API Token" />
+    </div>
   </div>
 
-  <div class="mt-4">
+  <!-- Location Settings Section -->
+  <div class="section">
+    <h6 class="section-header"><strong>Location Settings</strong></h6>
     <div class="form-group">
-      <h6><strong>Temperature Range (K):</strong></h6>
-      <div class="input-group">
-        <div class="slider-track"></div>
-        <input type="range" id="warmTemp" class="form-range" min="2000" max="6500" step="100" />
-        <input type="range" id="coolTemp" class="form-range" min="2000" max="6500" step="100" />
-      </div>
-      <div class="d-flex justify-content-between">
-        <input type="number" id="warmTempNumber" class="form-control" min="2000" max="6500" step="100" />
-        <input type="number" id="coolTempNumber" class="form-control" min="2000" max="6500" step="100" />
-      </div>
+      <label class="form-label">Latitude:</label>
+      <input type="number" id="latitude" class="form-control" placeholder="e.g., 51.5072" min="-90" max="90" step="0.0001" />
     </div>
     <div class="form-group">
-      <h6><strong>Curve Exponent:</strong></h6>
-      <div>
-        <input type="number" id="curveExponent" class="form-control" step="0.1" min="0.1" max="10" />
+      <label class="form-label">Longitude:</label>
+      <input type="number" id="longitude" class="form-control" placeholder="e.g., 0.1276" min="-180" max="180" step="0.0001" />
+    </div>
+  </div>
+
+  <!-- Chart Section -->
+  <div class="section">
+    <div class="chart-container">
+      <canvas id="temperatureChart"></canvas>
+    </div>
+    
+    <div class="chart-controls">
+      <div class="form-group">
+        <h6><strong>Temperature Range (K):</strong></h6>
+        <div class="input-group">
+          <div class="slider-track"></div>
+          <input type="range" id="warmTemp" class="form-range" min="2000" max="6500" step="100" />
+          <input type="range" id="coolTemp" class="form-range" min="2000" max="6500" step="100" />
+        </div>
+        <div class="d-flex justify-content-between">
+          <input type="number" id="warmTempNumber" class="form-control" min="2000" max="6500" step="100" />
+          <input type="number" id="coolTempNumber" class="form-control" min="2000" max="6500" step="100" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <h6><strong>Curve Exponent:</strong></h6>
+        <div>
+          <input type="number" id="curveExponent" class="form-control" step="0.1" min="0.1" max="10" />
+        </div>
       </div>
     </div>
+  </div>
+
+
+
+    <!-- Lights to Exclude Section -->
+    <div class="section">
+      <h6 class="section-header"><strong>Lights to Exclude:</strong></h6>
+      <div class="section-content">
+        <!-- Container for multiple boxes -->
+        <div id="excludedLightsContainer"></div>
+
+        <!-- Plus button to add boxes -->
+        <button type="button" class="btn btn-add-lights" id="addExcludedLightBtn"><i class="fa fa-plus"></i> Add Light</button>
+      </div>
+    </div>
+
+    <!-- Save Button -->
     <button class="btn btn-primary save" id="saveSettings">Save Settings</button>
   </div>
 </div>
@@ -39,10 +86,79 @@
   }
 
   .btn {
-    margin: 0px !important;
-    margin-top: 10px !important;
-    width: 100% !important;
-    height: 35px !important;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    background: #444;
+    color: #e0e0e0;
+    transition: background-color 0.2s;
+    cursor: pointer;
+    margin: 0;
+  }
+
+  .btn:hover {
+    background: #555;
+  }
+
+  .btn-primary {
+    margin-top: 10px;
+    background: #0066cc;
+  }
+
+  .btn-primary:hover {
+    margin-top: 10px;
+    background: #0077ee;
+  }
+
+  /* Section styling */
+  .section {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    padding: 20px;
+    margin: 14px 0;
+  }
+
+  .section-header {
+    margin-bottom: 15px;
+    color: #fff;
+  }
+
+  .section-content {
+    padding: 10px 0 0 0;
+  }
+
+  /* Excluded lights styling */
+  .excluded-light-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .excluded-light-row .form-control {
+    flex: 1;
+    margin-bottom: 0;
+  }
+
+  .btn-remove-light {
+    min-width: 35px;
+    height: 38px;
+    padding: 0;
+    background: #cc3333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn-remove-light:hover {
+    background: #ee3939;
+  }
+
+  .btn-add-lights {
+    background: #444;
+    width: 100%;
+    margin-top: 10px;
+    display: block;
   }
 
   .header {
@@ -129,15 +245,24 @@
   }
 
   .form-control {
-    width: 48%;
     background-color: #444;
     border: none;
     color: #e0e0e0;
     border-radius: 5px;
-    margin-top: 0;
     padding: 10px;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
     transition: background-color 0.3s, box-shadow 0.3s;
+    width: 100%;
+  }
+
+  .d-flex .form-control {
+    width: 48%;
+  }
+
+  .form-label {
+    display: block;
+    margin-bottom: 5px;
+    color: #e0e0e0;
   }
 
   .form-control:focus {
@@ -147,13 +272,22 @@
     box-shadow: 0 0 0 2px rgba(255, 157, 0, 0.5);
   }
 
+  .chart-container {
+    width: 100%;
+    height: 400px;
+    margin-bottom: 20px;
+  }
+
   #temperatureChart {
     width: 100%;
-    height: 600px;
-    margin-top: 10px;
+    height: 100%;
     border-radius: 10px;
     background: linear-gradient(145deg, #222, #2a2a2a);
     box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  .chart-controls {
+    padding-top: 20px;
   }
 </style>
 
@@ -171,15 +305,24 @@
     async function loadConfig() {
       try {
         GLOBAL.config = await homebridge.getPluginConfig();
+
+        // If no config found or empty, initialize a default config
         if (!GLOBAL.config || !GLOBAL.config.length) {
           GLOBAL.config = [
             {
               warmTemp: 2700,
               coolTemp: 6500,
               curveExponent: 3,
+              excludedLights: [],
             },
           ];
         }
+
+        // Ensure excludedLights is defined in case it doesn't exist in the config
+        if (!('excludedLights' in GLOBAL.config[0])) {
+          GLOBAL.config[0].excludedLights = [];
+        }
+
         updateUI();
       } catch (error) {
         console.error('Failed to load config:', error);
@@ -188,6 +331,7 @@
     }
 
     function updateUI() {
+      // Update temperature UI
       $('#warmTemp')
         .val(GLOBAL.config[0].warmTemp || 2700)
         .attr('min', GLOBAL.constraints.tempRange.min)
@@ -196,10 +340,16 @@
         .val(GLOBAL.config[0].coolTemp || 6500)
         .attr('min', GLOBAL.constraints.tempRange.min)
         .attr('max', GLOBAL.constraints.tempRange.max);
+
+      // Update curve exponent UI
       $('#curveExponent')
         .val(GLOBAL.config[0].curveExponent || 3)
         .attr('min', GLOBAL.constraints.curveExponent.min)
         .attr('max', GLOBAL.constraints.curveExponent.max);
+
+      // Populate excluded lights
+      $('#excludedLightsContainer').empty();
+      GLOBAL.config[0].excludedLights.forEach((lightId) => addExcludedLightRow(lightId));
 
       updateRangeInputs();
       updateCurveExponent();
@@ -212,7 +362,6 @@
       const curveExponent = parseFloat($('#curveExponent').val());
 
       const ctx = $('#temperatureChart')[0].getContext('2d');
-
       const hours = Array.from({ length: 24 }, (_, i) => i);
       const temperatures = hours.map((hour) => {
         const sunPosition = Math.sin((hour / 24) * Math.PI);
@@ -291,8 +440,8 @@
     }
 
     function updateRangeInputs() {
-      const minVal = parseInt($('#warmTemp').val());
-      const maxVal = parseInt($('#coolTemp').val());
+      const minVal = parseInt($('#warmTemp').val(), 10);
+      const maxVal = parseInt($('#coolTemp').val(), 10);
 
       if (minVal > maxVal) {
         $('#coolTemp').val(minVal);
@@ -308,52 +457,161 @@
       $('#curveExponentValue').text(value);
     }
 
-    async function saveConfig() {
-      const warmTemp = parseInt($('#warmTemp').val(), 10);
-      const coolTemp = parseInt($('#coolTemp').val(), 10);
-      const curveExponent = parseFloat($('#curveExponent').val());
+    // Dynamically create a row for excluding a light
+    function addExcludedLightRow(lightId = '') {
+      const row = $(`
+        <div class="excluded-light-row">
+          <input
+            type="text"
+            class="form-control excludedLightInput"
+            placeholder="Enter Light ID"
+            value="${lightId}"
+          />
+          <button type="button" class="btn btn-remove-light">X</button>
+        </div>
+      `);
 
-      if (isNaN(warmTemp) || isNaN(coolTemp) || isNaN(curveExponent)) {
-        homebridge.toast.error('Invalid input. Please check your values.', 'Error');
-        return;
-      }
+      // Remove the row when X is clicked
+      row.find('.btn-remove-light').on('click', function () {
+        row.remove();
+      });
 
-      if (warmTemp >= coolTemp) {
-        homebridge.toast.error('Warm temperature must be less than cool temperature.', 'Error');
-        return;
-      }
-
-      const newConfig = {
-        ...GLOBAL.config[0],
-        warmTemp,
-        coolTemp,
-        curveExponent,
-      };
-
-      try {
-        await homebridge.updatePluginConfig([newConfig]);
-        await homebridge.savePluginConfig();
-        homebridge.toast.success('Settings saved successfully!');
-        GLOBAL.config[0] = newConfig;
-        console.log('Saved config:', GLOBAL.config);
-      } catch (error) {
-        console.error('Failed to save config:', error);
-        homebridge.toast.error('Failed to save settings. Please try again.', 'Error');
-      }
+      $('#excludedLightsContainer').append(row);
     }
+
+// Update the loadConfig function
+async function loadConfig() {
+  try {
+    GLOBAL.config = await homebridge.getPluginConfig();
+
+    // If no config found or empty, initialize a default config
+    if (!GLOBAL.config || !GLOBAL.config.length) {
+      GLOBAL.config = [
+        {
+          warmTemp: 2700,
+          coolTemp: 6500,
+          curveExponent: 3,
+          excludedLights: [],
+          bridgeIp: '',
+          apiToken: '',
+          latitude: 0,
+          longitude: 0,
+        },
+      ];
+    }
+
+    // Ensure excludedLights is defined in case it doesn't exist in the config
+    if (!('excludedLights' in GLOBAL.config[0])) {
+      GLOBAL.config[0].excludedLights = [];
+    }
+
+    // Update UI with bridge and location settings
+    $('#bridgeIp').val(GLOBAL.config[0].bridgeIp || '');
+    $('#apiToken').val(GLOBAL.config[0].apiToken || '');
+    $('#latitude').val(GLOBAL.config[0].latitude || '');
+    $('#longitude').val(GLOBAL.config[0].longitude || '');
+
+    updateUI();
+  } catch (error) {
+    console.error('Failed to load config:', error);
+    homebridge.toast.error('Failed to load configuration. Please try restarting Homebridge.');
+  }
+}
+
+async function saveConfig() {
+  const warmTemp = parseInt($('#warmTemp').val(), 10);
+  const coolTemp = parseInt($('#coolTemp').val(), 10);
+  const curveExponent = parseFloat($('#curveExponent').val());
+  const bridgeIp = $('#bridgeIp').val().trim();
+  const apiToken = $('#apiToken').val().trim();
+  const latitude = parseFloat($('#latitude').val());
+  const longitude = parseFloat($('#longitude').val());
+
+  // Validate required fields
+  if (!bridgeIp || !apiToken) {
+    homebridge.toast.error('Bridge IP and API Token are required.', 'Error');
+    return;
+  }
+
+  // Validate IP format
+  const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+  if (!ipRegex.test(bridgeIp)) {
+    homebridge.toast.error('Invalid IP address format.', 'Error');
+    return;
+  }
+
+  // Validate temperature values
+  if (isNaN(warmTemp) || isNaN(coolTemp) || isNaN(curveExponent)) {
+    homebridge.toast.error('Invalid temperature values. Please check your inputs.', 'Error');
+    return;
+  }
+
+  if (warmTemp >= coolTemp) {
+    homebridge.toast.error('Warm temperature must be less than cool temperature.', 'Error');
+    return;
+  }
+
+  // Validate latitude and longitude
+  if (isNaN(latitude) || isNaN(longitude)) {
+    homebridge.toast.error('Invalid latitude or longitude values.', 'Error');
+    return;
+  }
+
+  if (latitude < -90 || latitude > 90) {
+    homebridge.toast.error('Latitude must be between -90 and 90 degrees.', 'Error');
+    return;
+  }
+
+  if (longitude < -180 || longitude > 180) {
+    homebridge.toast.error('Longitude must be between -180 and 180 degrees.', 'Error');
+    return;
+  }
+
+  // Collect excluded lights
+  const excludedLights = [];
+  $('#excludedLightsContainer .excludedLightInput').each(function () {
+    const val = $(this).val().trim();
+    if (val) {
+      excludedLights.push(val);
+    }
+  });
+
+  const newConfig = {
+    ...GLOBAL.config[0],
+    warmTemp,
+    coolTemp,
+    curveExponent,
+    excludedLights,
+    bridgeIp,
+    apiToken,
+    latitude,
+    longitude,
+  };
+
+  try {
+    await homebridge.updatePluginConfig([newConfig]);
+    await homebridge.savePluginConfig();
+    homebridge.toast.success('Settings saved successfully!');
+    GLOBAL.config[0] = newConfig;
+    console.log('Saved config:', GLOBAL.config);
+  } catch (error) {
+    console.error('Failed to save config:', error);
+    homebridge.toast.error('Failed to save settings. Please try again.', 'Error');
+  }
+}
 
     // Initialize
     await loadConfig();
 
-    // Event Listeners
+    // Event listeners
     $('#warmTemp, #coolTemp').on('input', function () {
       updateRangeInputs();
       updateChart();
     });
 
     $('#warmTempNumber, #coolTempNumber').on('input', function () {
-      const minVal = parseInt($('#warmTempNumber').val());
-      const maxVal = parseInt($('#coolTempNumber').val());
+      const minVal = parseInt($('#warmTempNumber').val(), 10);
+      const maxVal = parseInt($('#coolTempNumber').val(), 10);
 
       $('#warmTemp').val(minVal);
       $('#coolTemp').val(maxVal);
@@ -367,9 +625,16 @@
       updateChart();
     });
 
+    // Save button
     $('#saveSettings').on('click', saveConfig);
+
+    // "Plus" button to add new light
+    $('#addExcludedLightBtn').on('click', function () {
+      addExcludedLightRow();
+    });
   })();
 </script>
 
+<!-- Include jQuery and Chart.js as needed -->
 <script src="js/modules/jquery.min.js"></script>
 <script src="js/modules/chart.js"></script>

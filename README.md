@@ -10,6 +10,7 @@
 [![npm downloads](https://img.shields.io/npm/d18m/homebridge-hue-daylight-sync.svg)](https://www.npmjs.com/package/homebridge-hue-daylight-sync)
 [![GitHub Issues](https://img.shields.io/github/issues/JoshBello/homebridge-hue-daylight-sync)](https://github.com/JoshBello/homebridge-hue-daylight-sync/issues)
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/JoshBello/homebridge-hue-daylight-sync/open)](https://github.com/JoshBello/homebridge-hue-daylight-sync/pulls)
+[![verified-by-homebridge](https://badgen.net/badge/homebridge/verified/purple)](https://github.com/homebridge/homebridge/wiki/Verified-Plugins)
 
 </span>
 
@@ -30,12 +31,15 @@ Hue Daylight Sync is a Homebridge plugin that automatically adjusts your Philips
 - Customizable warm and cool temperature ranges
 - Geolocation-based calculations for accurate sunlight mimicking
 - Manual override option with automatic mode switch
+- Exclude specific lights from automatic adjustments
+- Smart retry mechanism for reliable updates
 
 ## Auto Mode and Manual Adjustments
 
 - **Auto Mode**: Automatically adjusts your lights' color temperature based on the time of day. Enabled by default.
 - **Manual Adjustments**: Changing the brightness slider or color temperature in the Home app will disable Auto Mode, allowing you to set your preferred lighting.
 - **Re-Enabling Auto Mode**: To resume automatic adjustments, simply toggle the "Auto Mode" switch back on in the Home app.
+- **Excluded Lights**: Specify lights that should never be automatically adjusted, perfect for accent lighting or areas where you want consistent color temperature.
 
 ## Prerequisites
 
@@ -72,7 +76,8 @@ Add the following to your Homebridge `config.json` file:
       "curveExponent": 3,
       "updateInterval": 300000,
       "inputDebounceDelay": 750,
-      "defaultAutoMode" : true
+      "defaultAutoMode": true,
+      "excludedLights": []  // Array of light IDs to exclude from auto adjustments
     }
   ]
 }
@@ -92,10 +97,26 @@ Add the following to your Homebridge `config.json` file:
 | `updateInterval` | `number` | Interval in milliseconds between temperature updates | 300000 (5 minutes) |
 | `inputDebounceDelay` | `number` | Delay in milliseconds to prevent rapid successive updates | 750 |
 | `defaultAutoMode` | `boolean` | Enable Auto Mode by default | true |
+| `excludedLights` | `string[]` | Array of light IDs to exclude from automatic adjustments | [] |
 
 **Note**: For `latitude` and `longitude`, you must enter the coordinates for your specific location. The values shown in the example are for London, UK - make sure to replace these with your own coordinates.
 
 You can find your coordinates using online services like Google Maps or websites like https://www.latlong.net/
+
+### Excluding Lights
+
+To exclude specific lights from automatic adjustments:
+
+1. Find the light ID from your Hue Bridge (using the Hue API or developer tools)
+2. Add the light ID to the `excludedLights` array in your config
+3. Excluded lights will maintain their manual settings and won't be affected by the daylight sync
+
+Example configuration with excluded lights:
+```json
+{
+  "excludedLights": ["light1", "light2"]
+}
+```
 
 ## Usage
 
@@ -104,6 +125,7 @@ Once installed and configured, the plugin will appear in your Home app as a ligh
 - Toggle the main switch to turn the Daylight Sync on or off.
 - Use the brightness slider to manually adjust the color temperature.
 - Toggle the Auto Mode switch to enable or disable automatic temperature adjustments.
+- Excluded lights will maintain their manual settings regardless of Auto Mode status.
 
 When Auto Mode is enabled, the plugin will automatically adjust your Hue lights' color temperature throughout the day to match natural daylight patterns.
 
@@ -115,6 +137,7 @@ If you encounter any issues:
 2. Ensure your Hue Bridge IP and API token are correct.
 3. Verify that your latitude and longitude are set correctly.
 4. Make sure your Hue lights support color temperature adjustments.
+5. Verify that excluded light IDs are correct if using that feature.
 
 ## Contributing
 
