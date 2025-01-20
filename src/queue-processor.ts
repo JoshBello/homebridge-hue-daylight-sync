@@ -6,12 +6,16 @@ import { Config, LightState, QueueItem } from './types';
 export class QueueProcessor {
   private bridgeIp: string;
   private apiToken: string;
+  private excludedLights: string[];
   private requestQueue: QueueItem[] = [];
   private isProcessingQueue = false;
+  private readonly MAX_RETRIES = 3;
+  private readonly RETRY_DELAY = 1000; // 1 second
 
   constructor(config: Config, private readonly log: Logger) {
     this.bridgeIp = config.bridgeIp;
     this.apiToken = config.apiToken;
+    this.excludedLights = config.excludedLights || [];
   }
 
   async getLightState(): Promise<LightState> {
@@ -75,6 +79,13 @@ export class QueueProcessor {
         for (const light of lights) {
           const lightId = light.id as string;
           const lightName = ((light.metadata as Record<string, unknown>)?.name as string) || 'Unknown';
+
+          // Skip excluded lights
+          if (this.excludedLights.includes(lightId)) {
+            this.log.debug(`Skipping excluded light: ${lightName} (${lightId})`);
+            continue;
+          }
+
           this.queueLightUpdate(lightId, lightName, targetTemp);
         }
       } else {
@@ -90,7 +101,12 @@ export class QueueProcessor {
   }
 
   private queueLightUpdate(lightId: string, lightName: string, kelvin: number) {
-    this.requestQueue.push({ lightId, lightName, kelvin });
+    this.requestQueue.push({
+      lightId,
+      lightName,
+      kelvin,
+      retries: 0,
+    });
   }
 
   async processQueue() {
@@ -105,20 +121,36 @@ export class QueueProcessor {
       try {
         await this.changeLightSettings(item.lightId, item.lightName, item.kelvin);
       } catch (error) {
-        this.log.error(`Error processing queue item: ${error}`);
-        // Optionally, re-queue the failed item
-        // this.requestQueue.unshift(item);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        item.lastError = errorMessage;
+
+        if (item.retries < this.MAX_RETRIES) {
+          item.retries++;
+          this.log.warn(`Failed to update ${item.lightName} (Attempt ${item.retries}/${this.MAX_RETRIES}): ${errorMessage}`);
+
+          // Add back to queue with delay if it's not the last retry
+          setTimeout(() => {
+            this.requestQueue.unshift(item);
+            this.log.debug(`Retrying ${item.lightName} in ${this.RETRY_DELAY}ms`);
+          }, this.RETRY_DELAY * Math.pow(2, item.retries - 1)); // Exponential backoff
+        } else {
+          this.log.error(`Failed to update ${item.lightName} after ${this.MAX_RETRIES} attempts. Last error: ${item.lastError}`);
+        }
       }
     }
 
     this.isProcessingQueue = false;
+
+    // Process next item after a short delay
+    if (this.requestQueue.length > 0) {
+      setTimeout(() => this.processQueue(), 100);
+    }
   }
 
   private async changeLightSettings(lightId: string, lightName: string, kelvin: number) {
     const url = `https://${this.bridgeIp}/clip/v2/resource/light/${lightId}`;
     const headers = { 'hue-application-key': this.apiToken };
     const mirek = Math.round(1000000 / kelvin);
-
     const data = { color_temperature: { mirek } };
 
     try {
@@ -126,20 +158,20 @@ export class QueueProcessor {
         headers,
         httpsAgent: new https.Agent({ rejectUnauthorized: false }),
       });
+
       if (response.status === 200) {
         this.log.info(`${lightName}: ${kelvin}K`);
       } else {
-        this.log.error(`Failed to Change ${lightName}: ${response.status}`);
+        throw new Error(`HTTP ${response.status}`);
       }
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 429) {
-        this.log.warn(`Rate Limit Hit for ${lightName}, Re-Queueing`);
-        this.queueLightUpdate(lightId, lightName, kelvin);
-      } else if (error instanceof Error) {
-        this.log.error(`Error Updating ${lightName}: ${error.message}`);
-      } else {
-        this.log.error(`Unknown error updating ${lightName}`);
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 429) {
+          throw new Error('Rate limit exceeded');
+        }
+        throw new Error(error.message);
       }
+      throw error;
     }
   }
 }

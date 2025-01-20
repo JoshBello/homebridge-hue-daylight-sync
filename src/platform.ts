@@ -30,15 +30,15 @@ export class HueDaylightSyncPlatform implements DynamicPlatformPlugin {
 
     const validatedConfig = this.validateConfig(this.config);
     if (!validatedConfig) {
-      this.log.error('Invalid configuration. Please check your config.json');
+      this.log.error('Invalid Configuration. Please Check Your Config.json');
       return;
     }
 
     if (existingAccessory) {
-      this.log.info('Restoring existing accessory from cache:', existingAccessory.displayName);
+      this.log.info('Restoring Existing Accessory from Cache:', existingAccessory.displayName);
       new HueDaylightSyncAccessory(this, existingAccessory, validatedConfig);
     } else {
-      this.log.info('Adding new accessory');
+      this.log.info('Adding New Accessory');
       const accessory = new this.api.platformAccessory('Daylight Sync', uuid);
       new HueDaylightSyncAccessory(this, accessory, validatedConfig);
       this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);

@@ -76,6 +76,16 @@
         "type": "boolean",
         "default": true,
         "description": "Set to true to enable Auto Mode by default, false to disable."
+      },
+      "excludedLights": {
+        "title": "Excluded Lights",
+        "type": "array",
+        "items": {
+          "type": "string",
+          "title": "Light ID"
+        },
+        "description": "List of light IDs to exclude from automatic updates",
+        "default": []
       }
     }
   }
